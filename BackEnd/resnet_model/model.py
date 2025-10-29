@@ -7,8 +7,8 @@ import os
 
 current_dir = os.path.dirname(__file__)
 
-# Load pretrained ResNet-50
-model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+# Load pretrained ResNet-18
+model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
 model.eval()
 
 # Transform pipeline for preprocessing images
