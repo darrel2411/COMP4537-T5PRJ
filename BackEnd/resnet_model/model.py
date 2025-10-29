@@ -3,6 +3,9 @@ import torchvision.transforms as transforms
 from torchvision import models
 from PIL import Image
 import json
+import os
+
+current_dir = os.path.dirname(__file__)
 
 # Load pretrained ResNet-50
 model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V2)
@@ -20,7 +23,7 @@ transform = transforms.Compose([
 ])
 
 # Load label names
-with open("imagenet_classes.json") as f:
+with open(os.path.join(current_dir, "imagenet_classes.json")) as f:
     labels = json.load(f)
 
 def predict_image(image_path: str):

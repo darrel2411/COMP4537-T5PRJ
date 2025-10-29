@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
-from model import predict_image
+from BackEnd.resnet_model.model import predict_image
 import tempfile
 import shutil
 
