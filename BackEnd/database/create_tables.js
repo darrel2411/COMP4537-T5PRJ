@@ -6,7 +6,8 @@ async function createTables() {
             user_id INT NOT NULL AUTO_INCREMENT,
             email VARCHAR(100) NOT NULL,
             password VARCHAR(100) NOT NULL,
-            PRIMARY KEY (user_id)
+            PRIMARY KEY (user_id),
+			CONSTRAINT email_unique UNIQUE (email)
         );
 	`;
 	

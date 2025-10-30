@@ -3,8 +3,10 @@ import { useState } from "react";
 function Main() {
   const [msg, setMsg] = useState("");
 
+  const API_BASE = import.meta.env.VITE_API_BASE;
+
   const fetchQuote = async () => {
-    const res = await fetch("http://localhost:5050/");
+    const res = await fetch(`${API_BASE}`);
     const data = await res.json();
     setMsg(data.msg);
   }
