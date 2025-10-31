@@ -4,6 +4,7 @@ function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
+    const [name, setName] = useState("");
     const [password, setPassword] = useState("");
 
     const API_BASE = import.meta.env.VITE_API_BASE;
@@ -21,7 +22,8 @@ function Register() {
                 },
                 body: JSON.stringify({
                     email: email.toLowerCase(),
-                    password
+                    name: name.trim(),
+                    password: password.trim(),
                 }),
                 credentials: 'include' // for session cookies
             });
@@ -75,6 +77,29 @@ function Register() {
                                 placeholder="example@mail.com"
                                 required
                                 value={email}
+                                className="block w-full rounded-md px-3 py-1.5 text-base outline-1"
+                            />
+                        </div>
+                    </div>
+
+                     {/* name sections */}
+                    <div>
+                        <label
+                            htmlFor="name"
+                            className="block text-sm/6 font-medium"
+                        >
+                            Name
+                        </label>
+                        <div className="mt-2">
+                            <input 
+                                id="name"
+                                disabled={loading}
+                                type="text"
+                                name="email"
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="name"
+                                required
+                                value={name}
                                 className="block w-full rounded-md px-3 py-1.5 text-base outline-1"
                             />
                         </div>

@@ -14,19 +14,24 @@ router.get('/check-auth', (req, res) => {
 });
 
 router.post('/createUser', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, name, password } = req.body;
 
-    if (!email|| !password) {
+    if (!email|| !name || !password) {
         return res.status(400).json({ ok: false, msg: messages.invalidUserCreation });
     }
 
     const hashPassword = bcrypt.hashSync(password, saltRounds);
 
-    const success = await db_users.createUser({ email: email, password: hashPassword });
+    const success = await db_users.createUser({ 
+        email: email.trim(), 
+        name: name.trim(), 
+        password: hashPassword 
+    });
 
     if (success) {
         req.session.authenticated = true;
         req.session.email = email;
+        req.session.name = name;
 
         res.status(200).json({ msg: messages.successUserCreation, ok: true });
         return;
@@ -46,7 +51,7 @@ router.post('/authenticateUser', async (req, res) => {
             if (isMatch) {
                 req.session.authenticated = true;
                 req.session.email = email;
-
+                req.session.name = results[0].name;
 
                 res.json({ msg: messages.successAuthentication, ok: true });
                 return;
