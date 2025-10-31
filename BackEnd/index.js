@@ -3,6 +3,8 @@ require("dotenv").config();
 
 const { messages } = require("./lang/messages/en/user.js");
 const express = require("express");
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cors = require("cors");
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
@@ -21,6 +23,33 @@ const { printMySQLVersion } = include('database/db_utils');
 const db_users = include('database/users');
 
 printMySQLVersion();
+
+const expireTime = 60 * 60 * 1000; // 1 Hour
+const mongodb_user = process.env.MONGODB_USER;
+const mongodb_password = process.env.MONGODB_PASSWORD;
+const mongodb_host = process.env.MONGODB_HOST;
+const mongodb_database = process.env.MONGODB_DATABASE;
+const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
+const node_session_secret = process.env.NODE_SESSION_SECRET;
+
+const mongoStore = MongoStore.create({
+    mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`,
+    crypto: {
+        secret: mongodb_session_secret
+    }
+});
+
+app.use(session({
+    secret: node_session_secret,
+    store: mongoStore,
+    saveUninitialized: false,
+    resave: false,
+    cookie: { 
+        maxAge: expireTime,
+        sameSite: 'lax',   // allow cross-port requests on localhost
+        secure: false      // set true in production (HTTPS)
+     }
+}));
 
 app.get("/", (req, res) => {
     res.json({ msg: messages.welcome, ok: true });
@@ -66,6 +95,10 @@ app.post('/authenticateUser', async (req, res) => {
         if (results.length == 1) { // There should only be one user
             const isMatch = await bcrypt.compare(password, results[0].password);
             if (isMatch) {
+                req.session.authenticated = true;
+                req.session.email = email;
+
+
                 res.json({ msg: messages.successAuthentication, ok: true });
                 return;
             } else {
@@ -81,6 +114,14 @@ app.post('/authenticateUser', async (req, res) => {
     }
 
     res.json({ msg: messages.userNotFound, ok: false });
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ ok: false });
+    res.clearCookie('connect.sid');
+    res.json({ ok: true });
+  });
 });
 
 
