@@ -51,10 +51,33 @@ async function getUser(email) {
         console.log(err);
         return null;
     }
+}
 
+async function getUserContext(email) {
+    const getUserContextSQL = `
+        SELECT email, name, user_type_id 
+        FROM user
+        WHERE email = :email;
+    `;
+
+    const params = {
+        email: email
+    }
+
+    try {
+        const result = await database.query(getUserContextSQL, params);
+        console.log("Successfully retrieve user");
+        console.log(result[0]);
+        return result[0][0];
+    } catch (err) {
+        console.log("Error retrieving user");
+        console.log(err);
+        return null;
+    }
 }
 
 module.exports = {
     createUser,
-    getUser
+    getUser,
+    getUserContext
 }

@@ -6,10 +6,14 @@ const saltRounds = 12;
 const db_users = include('database/users');
 const { messages } = require('../lang/messages/en/user');
 
-router.get('/check-auth', (req, res) => {
+router.get('/check-auth', async (req, res) => {
+    const user = await db_users.getUserContext(req.session.email);
+    
     res.json({
         ok: req.session.authenticated,
         email: req.session.email,
+        name: user.name,
+        user_type_id: user.user_type_id
     })
 });
 

@@ -19,7 +19,8 @@ export function UserProvider({ children }) {
                 if (data.ok) {
                     setUser({
                         email: data.email,
-                        name: "Guest",
+                        name: data.name,
+                        user_type_id: data.user_type_id
                     });
                 } else {
                     setUser(null);
