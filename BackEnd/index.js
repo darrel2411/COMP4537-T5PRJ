@@ -55,6 +55,13 @@ app.get("/", (req, res) => {
     res.json({ msg: messages.welcome, ok: true });
 });
 
+app.get('/check-auth', (req, res) => {
+    res.json({
+        ok: req.session.authenticated,
+        email: req.session.email,
+    })
+});
+
 app.get('/createTables', async (req, res) => {
     const create_tables = include('database/create_tables');
 
@@ -79,6 +86,9 @@ app.post('/createUser', async (req, res) => {
     const success = await db_users.createUser({ email: email, password: hashPassword });
 
     if (success) {
+        req.session.authenticated = true;
+        req.session.email = email;
+
         res.status(200).json({ msg: messages.successUserCreation, ok: true });
         return;
     }
