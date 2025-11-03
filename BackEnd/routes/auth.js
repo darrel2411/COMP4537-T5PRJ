@@ -6,15 +6,41 @@ const saltRounds = 12;
 const db_users = include('database/users');
 const { messages } = require('../lang/messages/en/user');
 
-router.get('/check-auth', async (req, res) => {
-    const user = await db_users.getUserContext(req.session.email);
+// router.get('/check-auth', async (req, res) => {
+//     const user = await db_users.getUserContext(req.session.email);
 
-    res.json({
-        ok: req.session.authenticated,
-        email: req.session.email,
-        name: user.name,
-        user_type_id: user.user_type_id
-    })
+//     res.json({
+//         ok: req.session.authenticated,
+//         email: req.session.email,
+//         name: user.name,
+//         user_type_id: user.user_type_id
+//     })
+// });
+router.get('/check-auth', async (req, res) => {
+    try {
+        // If not authenticated, respond early
+        if (!req.session.authenticated || !req.session.email) {
+            return res.json({ ok: false, email: null, name: null, user_type_id: null });
+        }
+
+        // Otherwise, fetch user details from DB
+        const user = await db_users.getUserContext(req.session.email);
+
+        // Safely handle if user not found
+        if (!user) {
+            return res.json({ ok: false, email: req.session.email, name: null, user_type_id: null });
+        }
+
+        res.json({
+            ok: true,
+            email: req.session.email,
+            name: user.name,
+            user_type_id: user.user_type_id
+        });
+    } catch (err) {
+        console.error("Error in /check-auth:", err);
+        res.status(500).json({ ok: false, msg: "Server error while checking auth" });
+    }
 });
 
 router.post('/createUser', async (req, res) => {
