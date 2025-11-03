@@ -8,5 +8,6 @@ export const messages = {
     successAuthentication: 'Succesfully retrieve user',
     invalidPassword: 'Invalid password',
     userNotFound: 'User not found!',
+    successRetrieveUsers: 'Users successfully retrieve',
     invalidNumberUser : (count) => `Invalid number of users matched: ${results.length} (expected 1)`
 }

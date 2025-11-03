@@ -5,7 +5,7 @@ const UserContext = createContext();
 export function UserProvider({ children }) {
     const API_BASE = import.meta.env.VITE_API_BASE;
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -20,7 +20,7 @@ export function UserProvider({ children }) {
                     setUser({
                         email: data.email,
                         name: data.name,
-                        user_type_id: data.user_type_id
+                        userTypeId: data.user_type_id
                     });
                 } else {
                     setUser(null);

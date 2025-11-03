@@ -51,9 +51,11 @@ app.use(session({
 const generalRoutes = require('./routes/general.js');
 const authRoutes = require('./routes/auth.js');
 const birdModelRoutes = require('./routes/birdModel.js');
+const adminRoutes = require('./routes/admin.js');
 
 app.use('/', generalRoutes);
 app.use('/', authRoutes);
+app.use('/', adminRoutes);
 app.use('/api', birdModelRoutes);
 
 

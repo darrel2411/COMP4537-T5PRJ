@@ -12,7 +12,7 @@ export default function Admin() {
     setLoading(true);
     setErr("");
     try {
-      const res = await fetch(`${API_BASE}/users`, {
+      const res = await fetch(`${API_BASE}/get-all-users`, {
         method: "GET",
         credentials: "include", // keep if using sessions/cookies
       });
@@ -44,7 +44,7 @@ export default function Admin() {
   }, [q, users]);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-800">
@@ -67,8 +67,8 @@ export default function Admin() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
+        <div className=" overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <table className="min-w-full text-left text-xs sm:text-sm">
             <thead className="bg-gray-100 text-gray-700">
               <tr>
                 <th className="px-4 py-3">ID</th>
@@ -105,8 +105,8 @@ export default function Admin() {
                 </tr>
               ) : (
                 filtered.map((u) => (
-                  <tr key={u.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">{u.id}</td>
+                  <tr key={u.user_id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">{u.user_id}</td>
                     <td className="px-4 py-3">{u.name}</td>
                     <td className="px-4 py-3">{u.email}</td>
                     <td className="px-4 py-3">{u.user_type}</td>

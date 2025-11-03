@@ -11,6 +11,7 @@ import NotFoundPage from "./pages/NotFound/NotFoundPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Register from "./pages/RegisterForm/Register";
 import { UserProvider, useUser } from "./context/UserContext";
+import Admin from "./pages/AdminPage/Admin";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
 
 function AppRoutes() {
   const { user, loading } = useUser();
+  console.log("user:", user);
 
   if (loading) return <div>Loading...</div>;
 
@@ -39,6 +41,11 @@ function AppRoutes() {
       <Route
         path="/register"
         element={user ? <Navigate to="/main" replace /> : <Register />}
+      />
+
+      <Route
+        path="/admin"
+        element={user?.userTypeId === 1 ? <Admin /> : <Navigate to="/main" replace />}
       />
 
       {/* Protected routes (Valid session needed) */}
