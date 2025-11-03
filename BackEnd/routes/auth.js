@@ -8,7 +8,7 @@ const { messages } = require('../lang/messages/en/user');
 
 router.get('/check-auth', async (req, res) => {
     const user = await db_users.getUserContext(req.session.email);
-    
+
     res.json({
         ok: req.session.authenticated,
         email: req.session.email,
@@ -19,17 +19,18 @@ router.get('/check-auth', async (req, res) => {
 
 router.post('/createUser', async (req, res) => {
     const { email, name, password } = req.body;
+    console.log(req.body);
 
-    if (!email|| !name || !password) {
+    if (!email || !name || !password) {
         return res.status(400).json({ ok: false, msg: messages.invalidUserCreation });
     }
 
     const hashPassword = bcrypt.hashSync(password, saltRounds);
 
-    const success = await db_users.createUser({ 
-        email: email.trim(), 
-        name: name.trim(), 
-        password: hashPassword 
+    const success = await db_users.createUser({
+        email: email.trim(),
+        name: name.trim(),
+        password: hashPassword
     });
 
     if (success) {
@@ -75,11 +76,11 @@ router.post('/authenticateUser', async (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) return res.status(500).json({ ok: false });
-    res.clearCookie('connect.sid');
-    res.json({ ok: true });
-  });
+    req.session.destroy(err => {
+        if (err) return res.status(500).json({ ok: false });
+        res.clearCookie('connect.sid');
+        res.json({ ok: true });
+    });
 });
 
 module.exports = router;

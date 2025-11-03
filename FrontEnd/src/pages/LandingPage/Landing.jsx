@@ -15,7 +15,6 @@ function Landing() {
 
   const onPick = (e) => {
     const f = e.target.files?.[0];
-    console.log(e.target.files);
     setFile(f || null);
     setResult(null);
     setError("");
@@ -37,7 +36,6 @@ function Landing() {
         body: fd,
         // credentials: "include", // only if your server needs cookies
       });
-
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         throw new Error(`Server ${res.status}: ${text || "upload failed"}`);
