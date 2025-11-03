@@ -1,9 +1,9 @@
 import { useState } from "react";
-// import { useUser } from "../context/UserContext";
+import { useUser } from "../../context/UserContext";
 import en from "./en";
 
 function Landing() {
-  //   const { user, setUser } = useUser();
+  const { user, setUser } = useUser();
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
@@ -11,7 +11,7 @@ function Landing() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  const MODEL_API_BASE = import.meta.env.VITE_API_BASE;
+  const API_BASE = import.meta.env.VITE_API_BASE;
 
   const onPick = (e) => {
     const f = e.target.files?.[0];
@@ -31,7 +31,7 @@ function Landing() {
       const fd = new FormData();
       fd.append("file", file); // <-- key must be "file" to match your Postman request
 
-      const res = await fetch(`${MODEL_API_BASE}/api/analyze-bird`, {
+      const res = await fetch(`${API_BASE}/api/analyze-bird`, {
         method: "POST",
         body: fd,
         // credentials: "include", // only if your server needs cookies
@@ -49,9 +49,33 @@ function Landing() {
     }
   };
 
+  const logout = async () => {
+    try {
+      await fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
+    } finally {
+      setUser(null); // clear context
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md mx-auto p-4 space-y-4">
+        {user && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-700">
+              Hello, <span className="font-medium">{user.name}</span>
+            </p>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm"
+            >
+              Logout
+            </button>
+          </div>
+        )}
         <input
           type="file"
           accept="image/*"
