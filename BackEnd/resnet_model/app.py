@@ -9,7 +9,11 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],   # add your prod domain later
+    allow_origins=[
+        "http://localhost:5173",
+        "https://comp-4537-t5-prj.vercel.app",
+        "https://birdquest-backend.onrender.com"
+    ],
     allow_credentials=False,                   # True only if you use cookies
     allow_methods=["*"],
     allow_headers=["*"],
