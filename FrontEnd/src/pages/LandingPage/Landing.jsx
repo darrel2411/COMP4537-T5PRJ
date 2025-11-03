@@ -49,7 +49,7 @@ function Landing() {
     }
   };
 
-  const logout = async () => {
+  const handleLogout = async () => {
     try {
       await fetch(`${API_BASE}/logout`, {
         method: "POST",
