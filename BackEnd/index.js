@@ -50,10 +50,11 @@ app.use(session({
 // Importing routes
 const generalRoutes = require('./routes/general.js');
 const authRoutes = require('./routes/auth.js');
+const birdModelRoutes = require('./routes/birdModel.js');
 
 app.use('/', generalRoutes);
 app.use('/', authRoutes);
-
+app.use('/api', birdModelRoutes);
 
 
 app.listen(PORT, () => {

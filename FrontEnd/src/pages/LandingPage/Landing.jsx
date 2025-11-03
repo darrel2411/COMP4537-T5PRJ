@@ -11,7 +11,7 @@ function Landing() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
-  const MODEL_API_BASE = import.meta.env.VITE_MODEL_API_BASE;
+  const MODEL_API_BASE = import.meta.env.VITE_API_BASE;
 
   const onPick = (e) => {
     const f = e.target.files?.[0];
@@ -31,7 +31,7 @@ function Landing() {
       const fd = new FormData();
       fd.append("file", file); // <-- key must be "file" to match your Postman request
 
-      const res = await fetch(`${MODEL_API_BASE}/predict`, {
+      const res = await fetch(`${MODEL_API_BASE}/api/analyze-bird`, {
         method: "POST",
         body: fd,
         // credentials: "include", // only if your server needs cookies
