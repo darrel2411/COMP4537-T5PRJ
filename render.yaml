@@ -10,3 +10,17 @@ services:
       - key: PORT
         value: 10000
     workingDirectory: BackEnd/resnet_model
+
+  - type: web
+    name: birdquest-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: FRONTEND_URL
+        value: https://your-frontend-url.netlify.app   # replace later
+      - key: MODEL_API_URL
+        value: https://bird-model-api.onrender.com
+    workingDirectory: BackEnd
