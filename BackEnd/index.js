@@ -10,10 +10,17 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 
 // Middleware
+// app.use(cors({
+//     origin: process.env.FRONTEND_URL,
+//     credentials: true  // Allows to send cookies
+// })); // Allow frontend to connect 
 app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true  // Allows to send cookies
-})); // Allow frontend to connect 
+  origin: [
+    "https://comp-4537-t5-prj.vercel.app", // your Vercel frontend
+    "http://localhost:5173"                // local dev
+  ],
+  credentials: true
+}));
 app.use(express.json()); // Parse incoming JSON requests
 
 const { printMySQLVersion } = include('database/db_utils');
@@ -42,8 +49,10 @@ app.use(session({
     resave: false,
     cookie: {
         maxAge: expireTime,
-        sameSite: 'lax',   // allow cross-port requests on localhost
-        secure: false      // set true in production (HTTPS)
+        // sameSite: 'lax',   // allow cross-port requests on localhost
+        // secure: false      // set true in production (HTTPS)
+        sameSite: 'none',   // allow cross-site cookie
+        secure: true        // required for HTTPS on Render
     }
 }));
 
