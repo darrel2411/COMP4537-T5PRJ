@@ -4,7 +4,6 @@ function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
   const API_BASE = import.meta.env.VITE_API_BASE;
@@ -22,7 +21,6 @@ function Register() {
         },
         body: JSON.stringify({
           email: email.toLowerCase(),
-          name: name.trim(),
           password: password.trim(),
         }),
         credentials: "include", // for session cookies

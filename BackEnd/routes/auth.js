@@ -44,10 +44,10 @@ router.get('/check-auth', async (req, res) => {
 });
 
 router.post('/createUser', async (req, res) => {
-    const { email, name, password } = req.body;
+    const { email, password } = req.body;
     console.log(req.body);
 
-    if (!email || !name || !password) {
+    if (!email || !password) {
         return res.status(400).json({ ok: false, msg: messages.invalidUserCreation });
     }
 
@@ -55,14 +55,12 @@ router.post('/createUser', async (req, res) => {
 
     const success = await db_users.createUser({
         email: email.trim(),
-        name: name.trim(),
         password: hashPassword
     });
 
     if (success) {
         req.session.authenticated = true;
         req.session.email = email;
-        req.session.name = name;
 
         res.status(200).json({ msg: messages.successUserCreation, ok: true });
         return;
