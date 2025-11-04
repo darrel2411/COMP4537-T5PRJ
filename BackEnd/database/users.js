@@ -32,7 +32,7 @@ async function createUser(userData) {
 
 async function getUser(email) {
     const getUserSQL = `
-        SELECT email, password 
+        SELECT email, password, name, user_type_id
         FROM user
         WHERE email = :email;
     `;

@@ -31,12 +31,29 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/main" />} />
+      {/* <Route path="/" element={<Navigate to="/main" />} /> */}
+      <Route
+        path="/"
+        element={
+          user
+            ? user.userTypeId === 1
+              ? <Navigate to="/admin" replace />
+              : <Navigate to="/main" replace />
+            : <Navigate to="/login" replace />
+        }
+      />
 
       {/* Block user with valid session */}
       <Route
         path="/login"
-        element={user ? <Navigate to="/main" replace /> : <Login />}
+        // element={user ? <Navigate to="/main" replace /> : <Login />}
+        element={
+          user
+            ? user.userTypeId === 1
+              ? <Navigate to="/admin" replace />
+              : <Navigate to="/main" replace />
+            : <Login />
+        }
       />
       <Route
         path="/register"
@@ -45,7 +62,16 @@ function AppRoutes() {
 
       <Route
         path="/admin"
-        element={user?.userTypeId === 1 ? <Admin /> : <Navigate to="/main" replace />}
+        // element={user?.userTypeId === 1 ? <Admin /> : <Navigate to="/main" replace />}
+        element={
+          loading ? (
+            <div>Loading...</div>
+          ) : user?.userTypeId === 1 ? (
+            <Admin />
+          ) : (
+            <Navigate to="/main" replace />
+          )
+        }
       />
 
       {/* Protected routes (Valid session needed) */}

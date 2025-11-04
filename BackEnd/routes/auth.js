@@ -82,7 +82,16 @@ router.post('/authenticateUser', async (req, res) => {
                 req.session.email = email;
                 req.session.name = results[0].name;
 
-                res.json({ msg: messages.successAuthentication, ok: true });
+                // res.json({ msg: messages.successAuthentication, ok: true });
+                req.session.user_type_id = results[0].user_type_id;
+
+                res.json({
+                    msg: messages.successAuthentication,
+                    ok: true,
+                    email,
+                    name: results[0].name,
+                    user_type_id: results[0].user_type_id
+                });
                 return;
             } else {
                 console.log("Invalid password");
