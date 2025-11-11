@@ -29,12 +29,17 @@ async function createUserTable() {
 	name VARCHAR(50) NOT NULL,
 	password VARCHAR(100) NOT NULL,
 	user_type_id INT NOT NULL,
-    created_at DATE,
-    updated_at DATE,
+    img_id INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    api_consumption INT DEFAULT 0,
 	PRIMARY KEY (user_id),
 	CONSTRAINT email_unique UNIQUE (email),
 	CONSTRAINT fk_user_type_User 
     FOREIGN KEY (user_type_id) REFERENCES user_type(user_type_id) 
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT fk_profile_picture 
+    FOREIGN KEY (img_id) REFERENCES image(img_id) 
     ON DELETE RESTRICT ON UPDATE CASCADE
 );
 	`;
@@ -74,18 +79,18 @@ async function createImageTable() {
 	}
 }
 
-async function createRarestTypeTable() {
-	const createRarestTypeSQL = `
-	CREATE TABLE IF NOT EXISTS rarest_type(
-	rarest_type_id INT NOT NULL AUTO_INCREMENT,
-    rarest_type VARCHAR(50),
+async function createRareTypeTable() {
+	const createRareTypeSQL = `
+	CREATE TABLE IF NOT EXISTS rare_type(
+	rare_type_id INT NOT NULL AUTO_INCREMENT,
+    rare_type VARCHAR(50),
     score INT NOT NULL,
-    PRIMARY KEY (rarest_type_id)
+    PRIMARY KEY (rare_type_id)
 );
 	`;
 
 	try {
-		const results = await database.query(createRarestTypeSQL);
+		const results = await database.query(createRareTypeSQL);
 		console.log("Successfully created rarest type table");
 		return true;
 	}
@@ -103,11 +108,11 @@ async function createBirdTable() {
     name VARCHAR(50) NOT NULL,
     scientific_name VARCHAR(100),
     fun_fact VARCHAR(255),
-    rarest_type_id INT NOT NULL,
-    created_at DATE,
+    rare_type_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (bird_id),
-    CONSTRAINT fk_rarest_type_Bird 
-    FOREIGN KEY (rarest_type_id) REFERENCES rarest_type(rarest_type_id) 
+    CONSTRAINT fk_rare_type_Bird 
+    FOREIGN KEY (rare_type_id) REFERENCES rare_type(rare_type_id) 
     ON DELETE RESTRICT ON UPDATE CASCADE
 );
 	`;
@@ -131,6 +136,7 @@ async function createCollectionTable() {
     user_id INT NOT NULL,
     bird_id INT NOT NULL,
     img_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (collection_id),
     CONSTRAINT fk_collection_user FOREIGN KEY (user_id) REFERENCES user(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -158,7 +164,7 @@ async function createTables() {
     createUserTypeTable,
     createUserTable,
     createImageTable,
-    createRarestTypeTable,
+    createRareTypeTable,
     createBirdTable,
     createCollectionTable,
   ];

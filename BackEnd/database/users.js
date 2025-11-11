@@ -3,9 +3,9 @@ const database = include('databaseConnection');
 async function createUser(userData) {
     const createUserSQL = `
         INSERT INTO user 
-        (email, name, password, user_type_id, created_at, updated_at, img_id)
+        (email, name, password, user_type_id, img_id)
         VALUES
-        (:email, :name, :password, :user_type_id, :created_at, :updated_at, :img_id);
+        (:email, :name, :password, :user_type_id, :img_id);
     `;
 
     const params = {
@@ -13,8 +13,6 @@ async function createUser(userData) {
         name: userData.name,
         password: userData.password,
         user_type_id: 2,
-        created_at: new Date(),
-        updated_at: new Date(),
         img_id: null
     }
 

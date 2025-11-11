@@ -6,16 +6,6 @@ const saltRounds = 12;
 const db_users = include('database/users');
 const { messages } = require('../lang/messages/en/user');
 
-// router.get('/check-auth', async (req, res) => {
-//     const user = await db_users.getUserContext(req.session.email);
-
-//     res.json({
-//         ok: req.session.authenticated,
-//         email: req.session.email,
-//         name: user.name,
-//         user_type_id: user.user_type_id
-//     })
-// });
 router.get('/check-auth', async (req, res) => {
     try {
         // If not authenticated, respond early
@@ -44,10 +34,10 @@ router.get('/check-auth', async (req, res) => {
 });
 
 router.post('/createUser', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, name, password } = req.body;
     console.log(req.body);
 
-    if (!email || !password) {
+    if (!email || !name || !password) {
         return res.status(400).json({ ok: false, msg: messages.invalidUserCreation });
     }
 
@@ -55,6 +45,7 @@ router.post('/createUser', async (req, res) => {
 
     const success = await db_users.createUser({
         email: email.trim(),
+        name: name.trim(),
         password: hashPassword
     });
 
