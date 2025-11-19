@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { Button } from "../ui/button";
 
 function LogoutButton() {
   const navigate = useNavigate();
@@ -19,14 +20,10 @@ function LogoutButton() {
   };
 
   return (
-    <button
-      onClick={handleLogout}
-      className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 transition-colors"
-    >
+    <Button variant="destructive" onClick={handleLogout} className="">
       Log Out
-    </button>
+    </Button>
   );
 }
 
 export default LogoutButton;
-

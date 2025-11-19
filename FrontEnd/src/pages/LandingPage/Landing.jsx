@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { Button } from "@/components/ui/button";
+import LogoutButton from "@/components/auth/LogoutButton";
 import en from "./en";
 
 function Landing() {
@@ -53,17 +54,6 @@ function Landing() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${API_BASE}/logout`, {
-        method: "POST",
-        credentials: "include",
-      }).catch(() => {});
-    } finally {
-      setUser(null); // clear context
-    }
-  };
-
   const handleDeleteUser = async () => {
     setLoading(true);
     setError("");
@@ -102,12 +92,7 @@ function Landing() {
             <p className="text-sm text-gray-700">
               Hello, <span className="font-medium">{user.name}</span>
             </p>
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm"
-            >
-              Logout
-            </button>
+            <LogoutButton />
           </div>
         )}
         <input
@@ -147,7 +132,7 @@ function Landing() {
               variant="destructive"
               onClick={handleDeleteUser}
               disabled={loading}
-              className="w-full bg-red-600"
+              className="w-full"
             >
               {loading ? "Deleting..." : "Delete Account"}
             </Button>
