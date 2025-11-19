@@ -239,6 +239,18 @@ router.patch('/user/:email', async (req, res) => {
     }
 
     try {
+        // get user from DB
+        const result = await db_users.getUser(email);
+        if (!result || result.length !== 1) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found",
+            });
+        }
+
+        const user = result[0];
+
+        // data object to be updated
         const updateData = {};
 
         // check if name is to be updated
@@ -253,29 +265,21 @@ router.patch('/user/:email', async (req, res) => {
                     ok: false,
                     msg: "Current password is required to change password",
                 });
+            } else {
+                const checkPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+                if (!checkPasswordMatch) {
+                    return res.status(400).json({
+                        ok: false,
+                        msg: "Current password is incorrect",
+                    });
+                } else {
+                    // If current password is correct, hash the new one
+                    updateData.password = bcrypt.hashSync(newPassword.trim(), saltRounds);
+                }
             }
         }
 
-        const result = await db_users.getUser(email);
-        if (!result || result.length !== 1) {
-            return res.status(404).json({
-                ok: false,
-                msg: "User not found",
-            });
-        }
-
-        const user = results[0];
-
-        const checkPasswordMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!checkPasswordMatch) {
-            return res.status(400).json({
-                ok: false,
-                msg: "Current password is incorrect",
-            });
-        }
-
-        // If current password is correct, hash the new one
-        updateData.password = bcrypt.hashSync(newPassword.trim(), saltRounds);
+        console.log(`this is update data ==>. ${JSON.stringify(updateData)}`)
 
         // if no data is to be updated, return 400
         if (Object.keys(updateData).length === 0) {
@@ -287,7 +291,7 @@ router.patch('/user/:email', async (req, res) => {
 
         // try to update
         const updateResult = await db_users.updateUser(email.trim().toLowerCase(), updateData);
-
+        console.log(`update result is ${updateResult}`)
         if (!updateResult || updateResult.affectedRows === 0) {
             return res.status(404).json({
                 ok: false,
@@ -307,10 +311,10 @@ router.patch('/user/:email', async (req, res) => {
 
 
     } catch (err) {
-        console.error("Error in /delete-user:", err);
+        console.error("Error in /user/:email", err);
         return res.status(500).json({
             ok: false,
-            msg: "Server error while deleting user",
+            msg: "Server error while updating user",
         });
     }
 });
