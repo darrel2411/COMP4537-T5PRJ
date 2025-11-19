@@ -65,7 +65,6 @@ async function getUserConsumption() {
 
     try {
         const result = await database.query(getUserConsumptionSQL);
-        console.log("Successfully retrieved user consumption");
         console.log(`Total users found: ${result[0]?.length || 0}`);
         console.log(result[0]);
         return result[0];
