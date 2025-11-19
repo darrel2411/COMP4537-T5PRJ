@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Register from "./pages/RegisterForm/Register";
 import { UserProvider, useUser } from "./context/UserContext";
 import Admin from "./pages/AdminPage/Admin";
+import Collection from "./pages/Collection/Collection";
 
 function App() {
   return (
@@ -79,6 +80,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Landing />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/collections"
+        element={
+          <ProtectedRoute>
+            <Collection />
           </ProtectedRoute>
         }
       />
