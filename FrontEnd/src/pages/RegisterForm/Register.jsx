@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2Icon } from "lucide-react"
-
+import { CheckCircle2Icon } from "lucide-react";
 
 function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(""); 
+  const [success, setSuccess] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +36,7 @@ function Register() {
 
       if (data.ok) {
         console.log(data);
-        setSuccess("User created successfully"); 
+        setSuccess("User created successfully");
         // window.location.href = "/";
       } else {
         setError(data.msg);
@@ -101,10 +100,7 @@ function Register() {
 
           {/* name sections */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm/6 font-medium"
-            >
+            <label htmlFor="name" className="block text-sm/6 font-medium">
               Name
             </label>
             <div className="mt-2">
@@ -122,7 +118,6 @@ function Register() {
             </div>
           </div>
           <div>
-
             {/* Password sections */}
             <div className="flex items-center justify-between">
               <label
