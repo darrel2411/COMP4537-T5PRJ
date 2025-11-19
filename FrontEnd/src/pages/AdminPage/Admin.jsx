@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import LogoutButton from "../../components/auth/LogoutButton";
 
 export default function Admin() {
   const API_BASE = import.meta.env.VITE_API_BASE;
@@ -64,6 +65,7 @@ export default function Admin() {
             >
               {loading ? "Refreshing…" : "Refresh"}
             </button>
+            <LogoutButton />
           </div>
         </div>
 
