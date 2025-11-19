@@ -29,7 +29,7 @@ function Landing() {
 
     try {
       const fd = new FormData();
-      fd.append("file", file); // <-- key must be "file" to match your Postman request
+      fd.append("image", file); // <-- key must be "image" to match the model API
 
       const res = await fetch(`${API_BASE}/api/analyze-bird`, {
         method: "POST",

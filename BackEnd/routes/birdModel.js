@@ -1,40 +1,52 @@
 const express = require("express");
-const axios = require("axios");
 const multer = require("multer");
-const FormData = require("form-data");
 require("dotenv").config();
 
 const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// 🔗 Load model API URL from .env
-const MODEL_API_URL = process.env.MODEL_API_URL;
+// Load model API URL from .env (e.g., http://localhost:3000)
+const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:3000";
 
 // ───────────────────────────────────────────────
 // POST /api/analyze-bird
-// Accepts an uploaded image file and forwards it to FastAPI
+// Accepts an uploaded image file and forwards it to the bird classification model
 // ───────────────────────────────────────────────
-router.post("/analyze-bird", upload.single("file"), async (req, res) => {
+router.post("/analyze-bird", upload.single("image"), async (req, res) => {
   try {
-    if (!MODEL_API_URL) {
-      throw new Error("MODEL_API_URL not configured in .env");
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
     }
 
-    // 🧠 Build form-data for FastAPI
+    // Build form-data for the model API using native FormData (Node.js 18+)
+    // Convert buffer to Blob for native FormData
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
     const formData = new FormData();
-    formData.append("file", req.file.buffer, req.file.originalname);
+    formData.append("image", blob, req.file.originalname);
 
-    // 🚀 Forward the request to your FastAPI model
-    const response = await axios.post(MODEL_API_URL, formData, {
-      headers: formData.getHeaders(),
+    // Forward the request to the bird classification model
+    const classifyUrl = `${MODEL_API_URL}/classify`;
+    const response = await fetch(classifyUrl, {
+      method: "POST",
+      body: formData,
+      // Don't set Content-Type header - fetch will set it automatically with boundary
     });
 
-    // ✅ Return FastAPI's prediction result to the frontend
-    res.json(response.data);
+    if (!response.ok) {
+      const errorText = await response.text();      
+      throw new Error(`Model API returned ${response.status}: ${errorText}`);
+    }
+
+    // Return the model's prediction result (label, probability, classId) to the frontend
+    const data = await response.json();
+    res.json(data);
   } catch (err) {
-    console.error("Error forwarding to model:", err.response?.data || err.message);
-    res.status(500).json({ error: "Model API error" });
+    console.error("Error forwarding to model:", err.message);
+    res.status(500).json({ 
+      error: "Model API error",
+      details: err.message 
+    });
   }
 });
 
