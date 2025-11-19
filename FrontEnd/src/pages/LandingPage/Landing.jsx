@@ -1,13 +1,17 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import { Button } from "@/components/ui/button";
 import en from "./en";
 
 function Landing() {
   const { user, setUser } = useUser();
+  const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
 
@@ -23,7 +27,7 @@ function Landing() {
 
   const handleUpload = async () => {
     if (!file) return setError("Please choose an image first.");
-    setLoading(true);
+    setUploadLoading(true);
     setError("");
     setResult(null);
 
@@ -34,7 +38,7 @@ function Landing() {
       const res = await fetch(`${API_BASE}/api/analyze-bird`, {
         method: "POST",
         body: fd,
-        // credentials: "include", // only if your server needs cookies
+        credentials: "include", // include cookies for session
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -45,7 +49,7 @@ function Landing() {
     } catch (err) {
       setError(err.message || "Upload failed");
     } finally {
-      setLoading(false);
+      setUploadLoading(false);
     }
   };
 
@@ -57,6 +61,36 @@ function Landing() {
       }).catch(() => {});
     } finally {
       setUser(null); // clear context
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(`${API_BASE}/delete-user/${user.email}`, {
+        method: "DELETE",
+        credentials: "include", // send session cookie so backend knows who to delete
+      });
+
+      const data = await res.json().catch(() => ({}));
+      console.log("Delete response:", { status: res.status, data });
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.msg || "Failed to delete user");
+      }
+
+      setUser(null); // clear user from context
+      alert("Account deleted successfully.");
+
+      // Redirect to login page after successful deletion
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+    } catch (err) {
+      setError(err.message || "Failed to delete account");
+      setLoading(false);
     }
   };
 
@@ -94,10 +128,10 @@ function Landing() {
         )}
         <button
           onClick={handleUpload}
-          disabled={!file || loading}
+          disabled={!file || uploadLoading || loading}
           className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
         >
-          {loading ? en.MESSAGE.UPLOADING : en.MESSAGE.PREDICT}
+          {uploadLoading ? en.MESSAGE.UPLOADING : en.MESSAGE.PREDICT}
         </button>
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -105,6 +139,19 @@ function Landing() {
           <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
             {JSON.stringify(result, null, 2)}
           </pre>
+        )}
+
+        {user && (
+          <div className="pt-4 border-t">
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? "Deleting..." : "Delete Account"}
+            </Button>
+          </div>
         )}
       </div>
     </div>

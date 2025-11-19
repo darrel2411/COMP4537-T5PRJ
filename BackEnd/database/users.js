@@ -74,8 +74,57 @@ async function getUserContext(email) {
     }
 }
 
+// async function getUserIdByEmail(email) {
+//     const getUserIdSQL = `
+//         SELECT user_id 
+//         FROM user
+//         WHERE email = :email;
+//     `;
+
+//     const params = {
+//         email: email
+//     }
+
+//     try {
+//         const result = await database.query(getUserIdSQL, params);
+//         if (result[0] && result[0].length > 0) {
+//             return result[0][0].user_id;
+//         }
+//         return null;
+//     } catch (err) {
+//         console.log("Error retrieving user_id");
+//         console.log(err);
+//         return null;
+//     }
+// }
+
+async function deleteUser(email) {
+    const deleteUserSQL = `
+        DELETE FROM user
+        WHERE email = :email;
+    `;
+
+    const params = {
+        email: email
+    };
+
+    try {
+        const result = await database.query(deleteUserSQL, params);
+        console.log("Successfully deleted user");
+        console.log(result[0]);
+        return result[0].affectedRows > 0;
+    } catch (err) {
+        console.log("Error deleting user");
+        console.log(err);
+        return false;
+    }
+}
+
+
 module.exports = {
     createUser,
     getUser,
-    getUserContext
+    getUserContext,
+    // getUserIdByEmail
+    deleteUser
 }
