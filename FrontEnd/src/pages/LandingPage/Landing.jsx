@@ -147,7 +147,7 @@ function Landing() {
               variant="destructive"
               onClick={handleDeleteUser}
               disabled={loading}
-              className="w-full"
+              className="w-full bg-red-600"
             >
               {loading ? "Deleting..." : "Delete Account"}
             </Button>

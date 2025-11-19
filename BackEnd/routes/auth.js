@@ -219,4 +219,104 @@ router.delete('/delete-user/:email', async (req, res) => {
     // }
 });
 
+router.patch('/user/:email', async (req, res) => {
+    const { email } = req.params;
+    const { name, currentPassword, newPassword } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            ok: false,
+            msg: "Email parameter is required",
+        });
+    }
+
+    // Only allow the logged-in user to update themselves
+    if (!req.session || !req.session.authenticated || req.session.email !== email) {
+        return res.status(403).json({
+            ok: false,
+            msg: "You are not allowed to update this user",
+        });
+    }
+
+    try {
+        // get user from DB
+        const result = await db_users.getUser(email);
+        if (!result || result.length !== 1) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found",
+            });
+        }
+
+        const user = result[0];
+
+        // data object to be updated
+        const updateData = {};
+
+        // check if name is to be updated
+        if (name) {
+            updateData.name = name;
+        }
+
+        // check if password to be updated
+        if (newPassword) {
+            if (!currentPassword) {
+                return res.status(400).json({
+                    ok: false,
+                    msg: "Current password is required to change password",
+                });
+            } else {
+                const checkPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+                if (!checkPasswordMatch) {
+                    return res.status(400).json({
+                        ok: false,
+                        msg: "Current password is incorrect",
+                    });
+                } else {
+                    // If current password is correct, hash the new one
+                    updateData.password = bcrypt.hashSync(newPassword.trim(), saltRounds);
+                }
+            }
+        }
+
+        console.log(`this is update data ==>. ${JSON.stringify(updateData)}`)
+
+        // if no data is to be updated, return 400
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                ok: false,
+                msg: "No valid fields provided to update",
+            });
+        }
+
+        // try to update
+        const updateResult = await db_users.updateUser(email.trim().toLowerCase(), updateData);
+        console.log(`update result is ${updateResult}`)
+        if (!updateResult || updateResult.affectedRows === 0) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found or no changes applied",
+            });
+        }
+
+        // Keep session in sync for name
+        if (updateData.name) {
+            req.session.name = updateData.name;
+        }
+
+        return res.json({
+            ok: true,
+            msg: "Profile updated successfully",
+        });
+
+
+    } catch (err) {
+        console.error("Error in /user/:email", err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Server error while updating user",
+        });
+    }
+});
+
 module.exports = router;
