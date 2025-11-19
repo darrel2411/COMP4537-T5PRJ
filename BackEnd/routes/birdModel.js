@@ -1,3 +1,5 @@
+// This code was developed with assistance from OpenAI's ChatGPT.
+
 const express = require("express");
 const multer = require("multer");
 require("dotenv").config();
@@ -6,7 +8,6 @@ const router = express.Router();
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Load model API URL from .env (e.g., http://localhost:3000)
 const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:3000";
 
 // ───────────────────────────────────────────────
@@ -19,8 +20,7 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
       return res.status(400).json({ error: "No image file provided" });
     }
 
-    // Build form-data for the model API using native FormData (Node.js 18+)
-    // Convert buffer to Blob for native FormData
+    // Convert buffer to Blob to build FormData
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
     const formData = new FormData();
     formData.append("image", blob, req.file.originalname);
