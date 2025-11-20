@@ -2,7 +2,25 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import Navbar from "@/components/Navbar/Navbar";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import en from "./en";
 
 function Landing() {
@@ -16,27 +34,34 @@ function Landing() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [randomBirdImage, setRandomBirdImage] = useState("");
-  
+
+  // for profile settings purpose
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState(user?.name || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
   const fileInputRef = useRef(null);
 
   const API_BASE = import.meta.env.VITE_API_BASE;
 
   // Fetch a random bird image when component mounts
   useEffect(() => {
+    if (user?.name) setName(user.name);
     fetchRandomBirdImage();
-  }, []);
+  }, [user]);
 
   const fetchRandomBirdImage = () => {
     // Using a random bird image from Unsplash Source API (no auth required)
     // This generates a random bird image each time
     const birdImages = [
       "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1583160247711-2191776b4b91?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1583336663277-620dc1996580?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&h=600&fit=crop",
       "https://images.unsplash.com/photo-1549608276-5786777e6587?w=800&h=600&fit=crop",
     ];
-    
+
     // Pick a random bird image
     const randomIndex = Math.floor(Math.random() * birdImages.length);
     setRandomBirdImage(birdImages[randomIndex]);
@@ -115,10 +140,199 @@ function Landing() {
     }
   };
 
+  const handleEditProfile = () => {
+    setIsEditing(true);
+    setProfileError("");
+    setProfileSuccess("");
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+
+    const payload = {};
+
+    if (name && name !== user.name) {
+      payload.name = name.trim();
+    }
+
+    if (newPassword) {
+      payload.currentPassword = currentPassword;
+      payload.newPassword = newPassword;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      setProfileError("Nothing to update.");
+      return;
+    }
+
+    setSavingProfile(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/user/${encodeURIComponent(user.email)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.msg || "Failed to update profile");
+      }
+
+      // update context name if changed
+      if (payload.name) {
+        setUser((prev) => (prev ? { ...prev, name: payload.name } : prev));
+      }
+
+      setProfileSuccess("Profile updated successfully.");
+      setIsEditing(false);
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err) {
+      setProfileError(err.message || "Failed to update profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+      <div className="flex justify-end px-4 pt-4">
+        <Sheet>
+          <SheetTrigger className="px-4 py-2">Profile</SheetTrigger>
+
+          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-center text-3xl font-semibold">
+                Profile Settings
+              </SheetTitle>
+              <SheetDescription className="text-center">
+                Manage your profile information and account settings.
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="mt-4 space-y-6">
+              {/* Profile fields */}
+              <div className="space-y-4">
+                <FieldSeparator />
+
+                <FieldGroup className="pt-4 space-y-4">
+                  {/* Email – read only */}
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <Input
+                      value={user?.email || ""}
+                      readOnly
+                      className="bg-gray-100 cursor-not-allowed"
+                    />
+                    <FieldDescription>Email cannot be changed</FieldDescription>
+                  </Field>
+
+                  {/* Name – controlled, disabled when not editing */}
+                  <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={!isEditing}
+                      required
+                    />
+                  </Field>
+
+                  {/* Passwords – controlled, disabled when not editing */}
+                  <Field>
+                    <FieldLabel>Current Password</FieldLabel>
+                    <Input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="************"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>New Password</FieldLabel>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="************"
+                    />
+                    <FieldDescription>
+                      Leave password fields empty if you only want to change
+                      your name.
+                    </FieldDescription>
+                  </Field>
+                </FieldGroup>
+
+                {/* error / success messages */}
+                {profileError && (
+                  <p className="mt-1 text-sm text-red-600">{profileError}</p>
+                )}
+                {profileSuccess && (
+                  <p className="mt-1 text-sm text-green-600">
+                    {profileSuccess}
+                  </p>
+                )}
+
+                {/* actions */}
+                <div className="mt-4 flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleEditProfile}
+                    disabled={isEditing}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={handleSaveProfile}
+                    disabled={!isEditing || savingProfile}
+                  >
+                    {savingProfile ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Danger zone */}
+              {user && (
+                <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-destructive">
+                      Danger zone
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      This action cannot be undone. Deleting your account will
+                      permanently remove your data from our servers.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteUser}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </section>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-8">
         {/* Random Bird Image in the center */}
         <div className="mb-8">
@@ -186,10 +400,8 @@ function Landing() {
             </div>
           )}
 
-          {error && (
-            <p className="text-red-600 text-sm mt-2">{error}</p>
-          )}
-          
+          {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+
           {result && (
             <div className="mt-4 w-full max-w-md bg-white p-4 rounded-lg shadow-md">
               <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
@@ -198,20 +410,6 @@ function Landing() {
             </div>
           )}
         </div>
-
-        {/* Delete Account Button - moved to bottom */}
-        {user && (
-          <div className="mt-8 pt-8 border-t border-gray-200 w-full max-w-md">
-            <Button
-              variant="destructive"
-              onClick={handleDeleteUser}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? "Deleting..." : "Delete Account"}
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
