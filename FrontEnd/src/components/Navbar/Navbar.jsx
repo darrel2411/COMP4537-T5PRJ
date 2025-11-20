@@ -14,14 +14,17 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo on the left */}
-          <div className="flex-shrink-0 cursor-pointer" onClick={() => navigate("/main")}>
-            <img 
-              src="/logo.png" 
-              alt="Logo" 
+          <div
+            className="shrink-0 cursor-pointer"
+            onClick={() => navigate("/main")}
+          >
+            <img
+              src="/logo.png"
+              alt="Logo"
               className="h-8 w-auto"
               onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'inline';
+                e.target.style.display = "none";
+                e.target.nextSibling.style.display = "inline";
               }}
             />
             <span className="text-xl font-bold hidden">Logo</span>
@@ -52,9 +55,7 @@ function Navbar() {
           </div>
 
           {/* Logout button on the right (only if user is logged in) */}
-          <div className="flex-shrink-0">
-            {user && <LogoutButton />}
-          </div>
+          <div className="shrink-0">{user && <LogoutButton />}</div>
         </div>
       </div>
     </nav>
@@ -62,4 +63,3 @@ function Navbar() {
 }
 
 export default Navbar;
-
