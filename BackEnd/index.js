@@ -8,18 +8,15 @@ const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 5050;
+const isProd = process.env.NODE_ENV === "production";
 
 // Middleware
-// app.use(cors({
-//     origin: process.env.FRONTEND_URL,
-//     credentials: true  // Allows to send cookies
-// })); // Allow frontend to connect 
 app.use(cors({
-  origin: [
-    "https://comp-4537-t5-prj.vercel.app", // your Vercel frontend
-    "http://localhost:5173"                // local dev
-  ],
-  credentials: true
+    origin: [
+        "https://comp-4537-t5-prj.vercel.app", // your Vercel frontend
+        "http://localhost:5173"                // local dev
+    ],
+    credentials: true
 }));
 app.use(express.json()); // Parse incoming JSON requests
 
@@ -54,8 +51,8 @@ app.use(session({
         // sameSite: 'lax',   // allow cross-port requests on localhost
         // secure: false      // set true in production (HTTPS)
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: isProd === 'production' ? 'none' : 'lax',
+        secure: isProd === 'production',
     }
 }));
 

@@ -26,7 +26,6 @@ function App() {
 
 function AppRoutes() {
   const { user, loading } = useUser();
-  console.log("user:", user);
 
   if (loading) return <div>Loading...</div>;
 

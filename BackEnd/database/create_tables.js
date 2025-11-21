@@ -33,6 +33,7 @@ async function createUserTable() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     api_consumption INT DEFAULT 0,
+    score INT DEFAULT 0,
 	PRIMARY KEY (user_id),
 	CONSTRAINT email_unique UNIQUE (email),
 	CONSTRAINT fk_user_type_User 
@@ -159,6 +160,80 @@ async function createCollectionTable() {
 	}
 }
 
+async function createMethodTable() {
+	const createMethodSQL = `
+	CREATE TABLE IF NOT EXISTS method(
+	method_id INT NOT NULL AUTO_INCREMENT,
+    method VARCHAR(10) NOT NULL,
+    PRIMARY KEY (method_id),
+    UNIQUE KEY unique_method (method)
+);
+	`;
+
+	try {
+		const results = await database.query(createMethodSQL);
+		console.log("Successfully created method table");
+		return true;
+	}
+	catch (err) {
+		console.log("Error Creating method table");
+		console.log(err);
+		return false;
+	}
+}
+
+async function createEndpointTable() {
+	const createEndpointSQL = `
+	CREATE TABLE IF NOT EXISTS endpoint(
+	endpoint_id INT NOT NULL AUTO_INCREMENT,
+    method_id INT NOT NULL,
+    endpoint VARCHAR(255) NOT NULL,
+    PRIMARY KEY (endpoint_id),
+    CONSTRAINT fk_endpoint_method FOREIGN KEY (method_id) REFERENCES method(method_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    UNIQUE KEY unique_method_endpoint (method_id, endpoint)
+);
+	`;
+
+	try {
+		const results = await database.query(createEndpointSQL);
+		console.log("Successfully created endpoint table");
+		return true;
+	}
+	catch (err) {
+		console.log("Error Creating endpoint table");
+		console.log(err);
+		return false;
+	}
+}
+
+async function createRequestTable() {
+	const createRequestSQL = `
+	CREATE TABLE IF NOT EXISTS request(
+	request_id INT NOT NULL AUTO_INCREMENT,
+    endpoint_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (request_id),
+    CONSTRAINT fk_request_endpoint FOREIGN KEY (endpoint_id) REFERENCES endpoint(endpoint_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_request_user FOREIGN KEY (user_id) REFERENCES user(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+	`;
+
+	try {
+		const results = await database.query(createRequestSQL);
+		console.log("Successfully created request table");
+		return true;
+	}
+	catch (err) {
+		console.log("Error Creating request table");
+		console.log(err);
+		return false;
+	}
+}
+
 async function createTables() {
   const creationOrder = [
     createUserTypeTable,
@@ -167,6 +242,9 @@ async function createTables() {
     createRareTypeTable,
     createBirdTable,
     createCollectionTable,
+    createMethodTable,
+    createEndpointTable,
+    createRequestTable,
   ];
 
   for (const createFn of creationOrder) {

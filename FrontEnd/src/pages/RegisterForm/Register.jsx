@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2Icon } from "lucide-react";
 
 function Register() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +16,7 @@ function Register() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setSuccess("");
 
     try {
       const res = await fetch(`${API_BASE}/createUser`, {
@@ -31,7 +35,9 @@ function Register() {
       const data = await res.json();
 
       if (data.ok) {
-        window.location.href = "/";
+        console.log(data);
+        setSuccess("User created successfully");
+        // window.location.href = "/";
       } else {
         setError(data.msg);
       }
@@ -54,6 +60,16 @@ function Register() {
           Sign up to create account
         </h2>
       </div>
+      {/* ✅ success alert */}
+      {success && (
+        <div className="mt-4 sm:mx-auto sm:w-full sm:max-w-sm">
+          <Alert>
+            <CheckCircle2Icon className="h-4 w-4 text-green-500" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
@@ -84,10 +100,7 @@ function Register() {
 
           {/* name sections */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm/6 font-medium"
-            >
+            <label htmlFor="name" className="block text-sm/6 font-medium">
               Name
             </label>
             <div className="mt-2">
@@ -105,7 +118,6 @@ function Register() {
             </div>
           </div>
           <div>
-
             {/* Password sections */}
             <div className="flex items-center justify-between">
               <label

@@ -16,7 +16,7 @@ function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    
+
     try {
       const res = await fetch(`${API_BASE}/authenticateUser`, {
         method: "POST",
@@ -33,21 +33,17 @@ function Login() {
       const data = await res.json();
 
       if (data.ok) {
-        // console.log(data.msg);
-        // window.location.href = "/";
-          console.log("Login success:", data);
-          // ✅ Immediately update context so App knows we’re logged in
-          const newUser = {
-            email: data.email,
-            name: data.name,
-            userTypeId: data.user_type_id,
-          };
-          setUser(newUser);
+        console.log("Login success:", data);
+        // ✅ Immediately update context so App knows we’re logged in
+        const newUser = {
+          email: data.email,
+          name: data.name,
+          userTypeId: data.user_type_id,
+        };
+        setUser(newUser);
         if (data.user_type_id === 1 || data.userTypeId === 1) {
-          // window.location.href = "/admin";
           navigate("/admin");
         } else {
-          // window.location.href = "/main";
           navigate("/main");
         }
       } else {

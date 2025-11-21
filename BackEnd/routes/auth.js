@@ -107,4 +107,216 @@ router.post('/logout', (req, res) => {
     });
 });
 
+router.delete('/delete-user/:email', async (req, res) => {
+    const { email } = req.params;
+
+    if (!email) {
+        return res.status(400).json({
+            ok: false,
+            msg: "Email parameter is required",
+        });
+    }
+
+    try {
+        const result = await db_users.deleteUser(email.trim().toLowerCase());
+
+        if (!result) {
+            // nothing deleted
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found or already deleted",
+            });
+        }
+
+        console.log("this is req.session >>>" + JSON.stringify(req.session))
+        // If the deleted user is the one currently logged in, clean up the session
+        if (req.session && req.session.email === email) {
+            req.session.destroy(err => {
+                if (err) {
+                    console.error("Error destroying session after delete:", err);
+                    return res.status(500).json({
+                        ok: false,
+                        msg: "User deleted but session cleanup failed",
+                    });
+                }
+                res.clearCookie('connect.sid');
+                return res.json({
+                    ok: true,
+                    msg: "User deleted successfully",
+                });
+            });
+        } else {
+            // Deleted some other user (e.g., admin deleting another account)
+            return res.json({
+                ok: true,
+                msg: "User deleted successfully",
+            });
+        }
+
+    } catch (err) {
+        console.error("Error in /delete-user:", err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Server error while deleting user",
+        });
+    }
+    // try {
+    //     // Debug: Log request info
+    //     console.log('Delete user - Request headers:', {
+    //         cookie: req.headers.cookie,
+    //         origin: req.headers.origin,
+    //         referer: req.headers.referer
+    //     });
+
+    //     // Debug: Log session info
+    //     console.log('Delete user - Session:', {
+    //         authenticated: req.session?.authenticated,
+    //         email: req.session?.email,
+    //         user_type_id: req.session?.user_type_id,
+    //         sessionId: req.sessionID,
+    //         sessionExists: !!req.session
+    //     });
+
+    //     // Check if user is authenticated
+    //     if (!req.session || !req.session.authenticated || !req.session.email) {
+    //         console.log('Unauthorized - Session check failed. Session:', req.session);
+    //         return res.status(401).json({ 
+    //             ok: false, 
+    //             msg: messages.unauthorizedAccess 
+    //         });
+    //     }
+
+    //     const email = req.session.email;
+
+    //     // Users can delete their own account
+    //     // The email comes from the session, so it's always their own account
+    //     const success = await db_admin.deleteUser(email.trim());
+
+    //     if (success) {
+    //         // Destroy session after successful deletion
+    //         req.session.destroy((err) => {
+    //             if (err) {
+    //                 console.error("Error destroying session after user deletion:", err);
+    //             }
+    //         });
+
+    //         return res.json({
+    //             ok: true,
+    //             msg: messages.successDeleteUser
+    //         });
+    //     }
+
+    //     res.status(404).json({ 
+    //         ok: false, 
+    //         msg: messages.userNotFound 
+    //     });
+    // } catch (err) {
+    //     console.error("Error in /delete-user:", err);
+    //     res.status(500).json({ 
+    //         ok: false, 
+    //         msg: messages.errorDeleteUser 
+    //     });
+    // }
+});
+
+router.patch('/user/:email', async (req, res) => {
+    const { email } = req.params;
+    const { name, currentPassword, newPassword } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            ok: false,
+            msg: "Email parameter is required",
+        });
+    }
+
+    // Only allow the logged-in user to update themselves
+    if (!req.session || !req.session.authenticated || req.session.email !== email) {
+        return res.status(403).json({
+            ok: false,
+            msg: "You are not allowed to update this user",
+        });
+    }
+
+    try {
+        // get user from DB
+        const result = await db_users.getUser(email);
+        if (!result || result.length !== 1) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found",
+            });
+        }
+
+        const user = result[0];
+
+        // data object to be updated
+        const updateData = {};
+
+        // check if name is to be updated
+        if (name) {
+            updateData.name = name;
+        }
+
+        // check if password to be updated
+        if (newPassword) {
+            if (!currentPassword) {
+                return res.status(400).json({
+                    ok: false,
+                    msg: "Current password is required to change password",
+                });
+            } else {
+                const checkPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+                if (!checkPasswordMatch) {
+                    return res.status(400).json({
+                        ok: false,
+                        msg: "Current password is incorrect",
+                    });
+                } else {
+                    // If current password is correct, hash the new one
+                    updateData.password = bcrypt.hashSync(newPassword.trim(), saltRounds);
+                }
+            }
+        }
+
+        console.log(`this is update data ==>. ${JSON.stringify(updateData)}`)
+
+        // if no data is to be updated, return 400
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                ok: false,
+                msg: "No valid fields provided to update",
+            });
+        }
+
+        // try to update
+        const updateResult = await db_users.updateUser(email.trim().toLowerCase(), updateData);
+        console.log(`update result is ${updateResult}`)
+        if (!updateResult || updateResult.affectedRows === 0) {
+            return res.status(404).json({
+                ok: false,
+                msg: "User not found or no changes applied",
+            });
+        }
+
+        // Keep session in sync for name
+        if (updateData.name) {
+            req.session.name = updateData.name;
+        }
+
+        return res.json({
+            ok: true,
+            msg: "Profile updated successfully",
+        });
+
+
+    } catch (err) {
+        console.error("Error in /user/:email", err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Server error while updating user",
+        });
+    }
+});
+
 module.exports = router;

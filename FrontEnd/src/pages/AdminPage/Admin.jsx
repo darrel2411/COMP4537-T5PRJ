@@ -1,123 +1,135 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import LogoutButton from "../../components/auth/LogoutButton";
 
 export default function Admin() {
   const API_BASE = import.meta.env.VITE_API_BASE;
 
-  const [users, setUsers] = useState([]);
+  const [apiStats, setApiStats] = useState([]);
+  const [userConsumption, setUserConsumption] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [q, setQ] = useState("");
+  const [apiStatsErr, setApiStatsErr] = useState("");
+  const [userConsumptionErr, setUserConsumptionErr] = useState("");
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    setErr("");
+    setApiStatsErr("");
+    setUserConsumptionErr("");
+    
     try {
-      const res = await fetch(`${API_BASE}/get-all-users`, {
-        method: "GET",
-        credentials: "include", // keep if using sessions/cookies
-      });
-      if (!res.ok) throw new Error(`Server ${res.status}`);
-      const data = await res.json();
-      setUsers(Array.isArray(data) ? data : data.users || []);
-    } catch (e) {
-      setErr(e.message || "Failed to load users");
+      // Fetch API Stats
+      try {
+        const apiStatsRes = await fetch(`${API_BASE}/get-api-stats`, {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!apiStatsRes.ok) {
+          setApiStatsErr(`Failed to load API stats (${apiStatsRes.status}). Please ensure the server is running and has been restarted.`);
+        } else {
+          const apiStatsData = await apiStatsRes.json();
+          setApiStats(Array.isArray(apiStatsData.apiStats) ? apiStatsData.apiStats : []);
+        }
+      } catch (e) {
+        setApiStatsErr(`Error loading API stats: ${e.message}`);
+      }
+
+      // Fetch User Consumption
+      try {
+        const userConsumptionRes = await fetch(`${API_BASE}/get-user-consumption`, {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (!userConsumptionRes.ok) {
+          setUserConsumptionErr(`Failed to load user consumption (${userConsumptionRes.status}). Please ensure the server is running and has been restarted.`);
+        } else {
+          const userConsumptionData = await userConsumptionRes.json();
+          setUserConsumption(Array.isArray(userConsumptionData.userConsumption) ? userConsumptionData.userConsumption : []);
+        }
+      } catch (e) {
+        setUserConsumptionErr(`Error loading user consumption: ${e.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return users;
-    return users.filter((u) =>
-      [u.id, u.name, u.email, u.user_type]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(term)
-    );
-  }, [q, users]);
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
-      <div className="mx-auto max-w-5xl space-y-4">
+      <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-800">
-            Admin — Users
+            Admin Dashboard
           </h1>
           <div className="flex items-center gap-2">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search name/email/type…"
-              className="px-3 py-2 rounded-lg border bg-white text-sm"
-            />
             <button
-              onClick={fetchUsers}
+              onClick={fetchData}
               className="px-3 py-2 rounded-lg bg-black text-white text-sm"
               disabled={loading}
             >
               {loading ? "Refreshing…" : "Refresh"}
             </button>
+            <LogoutButton />
           </div>
         </div>
 
-        <div className=" overflow-hidden rounded-2xl border bg-white shadow-sm">
+        {(apiStatsErr || userConsumptionErr) && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-600 space-y-2">
+            {apiStatsErr && <div>⚠️ {apiStatsErr}</div>}
+            {userConsumptionErr && <div>⚠️ {userConsumptionErr}</div>}
+            <div className="text-sm mt-2 text-red-700">
+              <strong>Note:</strong> If you see 404 errors, please restart your backend server to load the new routes.
+            </div>
+          </div>
+        )}
+
+        {/* API Stats Table */}
+        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="bg-gray-100 px-4 py-3 border-b">
+            <h2 className="text-lg font-semibold text-gray-800">API Stats</h2>
+          </div>
           <table className="min-w-full text-left text-xs sm:text-sm">
             <thead className="bg-gray-100 text-gray-700">
               <tr>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3 w-24">Actions</th>
+                <th className="px-4 py-3">Method</th>
+                <th className="px-4 py-3">Endpoint</th>
+                <th className="px-4 py-3">Number of Requests</th>
               </tr>
             </thead>
-
             <tbody>
               {loading ? (
-                // simple skeleton rows
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-t">
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 3 }).map((__, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
                       </td>
                     ))}
                   </tr>
                 ))
-              ) : err ? (
+              ) : apiStatsErr ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-red-600">
-                    {err}
+                  <td colSpan={3} className="px-4 py-6 text-red-500 text-center">
+                    {apiStatsErr}
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : apiStats.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-gray-500">
-                    No users found.
+                  <td colSpan={3} className="px-4 py-6 text-gray-500 text-center">
+                    No API stats found.
                   </td>
                 </tr>
               ) : (
-                filtered.map((u) => (
-                  <tr key={u.user_id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">{u.user_id}</td>
-                    <td className="px-4 py-3">{u.name}</td>
-                    <td className="px-4 py-3">{u.email}</td>
-                    <td className="px-4 py-3">{u.user_type}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        className="rounded-md border px-2 py-1 text-xs hover:bg-gray-100"
-                        onClick={() => alert(`User: ${u.name}`)}
-                      >
-                        View
-                      </button>
-                    </td>
+                apiStats.map((stat, index) => (
+                  <tr key={index} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{stat.Method}</td>
+                    <td className="px-4 py-3">{stat.Endpoint}</td>
+                    <td className="px-4 py-3">{stat['Number of Requests']}</td>
                   </tr>
                 ))
               )}
@@ -125,9 +137,54 @@ export default function Admin() {
           </table>
         </div>
 
-        <p className="text-xs text-gray-500">
-          Endpoint: <code>{API_BASE}/users</code>
-        </p>
+        {/* User Consumption Table */}
+        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="bg-gray-100 px-4 py-3 border-b">
+            <h2 className="text-lg font-semibold text-gray-800">User Consumption</h2>
+          </div>
+          <table className="min-w-full text-left text-xs sm:text-sm">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Total number of requests</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-t">
+                    {Array.from({ length: 3 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <div className="h-4 w-32 animate-pulse rounded bg-gray-200" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : userConsumptionErr ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-red-500 text-center">
+                    {userConsumptionErr}
+                  </td>
+                </tr>
+              ) : userConsumption.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-gray-500 text-center">
+                    No user consumption data found.
+                  </td>
+                </tr>
+              ) : (
+                userConsumption.map((user, index) => (
+                  <tr key={index} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">{user.Name}</td>
+                    <td className="px-4 py-3">{user.Email}</td>
+                    <td className="px-4 py-3">{user['Total number of requests']}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
