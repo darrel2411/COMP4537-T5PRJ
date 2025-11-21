@@ -7,7 +7,7 @@ require("dotenv").config();
 const router = express.Router();
 const db_birds = include('database/birds');
 const db_logging = include('database/logging');
-const { messages } = require('../lang/messages/en/bird');
+const messages = require('../lang/messages/en/bird');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
