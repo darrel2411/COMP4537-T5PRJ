@@ -226,6 +226,73 @@ async function createImageEntry(imgTitle, imgUrl = '') {
     }
 }
 
+async function getAllBirds() {
+    const getBirdsSQL = `
+        SELECT b.name, rt.rare_type, rt.score
+        FROM bird b
+        INNER JOIN rare_type rt 
+            ON b.rare_type_id = rt.rare_type_id;
+    `;
+
+
+    try {
+         const result = await database.query(getBirdsSQL);
+        console.log("Successfully created user")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error retrieving birds");
+        console.log(err);
+        return null;
+    }
+}
+
+async function getBirdType() {
+    const getBirdTypesSQL = `
+        SELECT rare_type_id, rare_type, score
+        FROM rare_type;
+    `;
+
+
+    try {
+         const result = await database.query(getBirdTypesSQL);
+        console.log("Successfully created user")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error retrieving birds");
+        console.log(err);
+        return null;
+    }
+}
+
+async function getBirdsByType(data) {
+    const getBirdsByTypesSQL = `
+        SELECT b.bird_id, b.name, rt.rare_type_id, rt.rare_type, rt.score
+        FROM bird b
+        INNER JOIN rare_type rt
+            ON b.rare_type_id = rt.rare_type_id
+        WHERE b.rare_type_id = :rare_type_id;
+    `;
+
+    const params ={
+        rare_type_id: data.rare_type_id,
+    }
+
+
+    try {
+         const result = await database.query(getBirdsByTypesSQL, params);
+        console.log("Successfully created user")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error retrieving birds");
+        console.log(err);
+        return null;
+    }
+}
+
+
 module.exports = {
     getUserById,
     getUserByEmail,
@@ -235,6 +302,9 @@ module.exports = {
     checkBirdInCollection,
     addBirdToCollection,
     getRareTypeInfo,
-    createImageEntry
+    getAllBirds,
+    createImageEntry,
+    getBirdsByType,
+    getBirdType,
 };
 

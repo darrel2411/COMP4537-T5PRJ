@@ -15,5 +15,6 @@ export const messages = {
     invalidEmail: 'Invalid email provided.',
     cannotDeleteSelf: 'Cannot delete your own account.',
     successDeleteUser: 'User successfully deleted.',
-    errorDeleteUser: 'Error occurred while deleting user.'
+    errorDeleteUser: 'Error occurred while deleting user.',
+    successRetrieveBirds: 'Successfully retrieve all birds',
 }

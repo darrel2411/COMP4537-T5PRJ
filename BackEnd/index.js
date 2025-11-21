@@ -61,11 +61,13 @@ const generalRoutes = require('./routes/general.js');
 const authRoutes = require('./routes/auth.js');
 const birdModelRoutes = require('./routes/birdModel.js');
 const adminRoutes = require('./routes/admin.js');
+const birdsRoute = require('./routes/birds.js');
 
 app.use('/', generalRoutes);
 app.use('/', authRoutes);
 app.use('/', adminRoutes);
 app.use('/api', birdModelRoutes);
+app.use('/', birdsRoute)
 
 
 app.listen(PORT, () => {
