@@ -293,6 +293,30 @@ async function getBirdsByType(data) {
     }
 }
 
+async function getBirdsImage(data) {
+    const getBirdsImageSQL = `
+        SELECT img_url
+        FROM image
+        WHERE img_id = :img_id;
+    `;
+
+    const params ={
+        img_id: data.img_id,
+    }
+
+
+    try {
+         const result = await database.query(getBirdsImageSQL, params);
+        console.log("Successfully retrieve bird image")
+        console.log(result[0]);
+        return result[0][0].img_url;
+    } catch (err) {
+        console.log("Error retrieving bird image");
+        console.log(err);
+        return null;
+    }
+}
+
 
 module.exports = {
     getUserById,
@@ -307,5 +331,6 @@ module.exports = {
     createImageEntry,
     getBirdsByType,
     getBirdType,
+    getBirdsImage,
 };
 

@@ -53,7 +53,7 @@ async function getUser(email) {
 
 async function getUserContext(email) {
     const getUserContextSQL = `
-        SELECT email, name, user_type_id, api_consumption, score
+        SELECT user_id, email, name, user_type_id, api_consumption, score
         FROM user
         WHERE email = :email;
     `;
@@ -156,6 +156,32 @@ async function updateUser(email, fields) {
 
 }
 
+async function getUserCollection(data) {
+    const getUserCollectionSQL = `
+        SELECT c.collection_id, c.user_id, c.bird_id, c.img_id
+        FROM collection c
+        INNER JOIN bird b
+            ON c.bird_id = b.bird_id
+        WHERE c.user_id = :user_id;
+    `;
+
+    const params ={
+        user_id: data.user_id,
+    }
+
+
+    try {
+         const result = await database.query(getUserCollectionSQL, params);
+        console.log("Successfully retrieve user collections")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error retrieving user collections");
+        console.log(err);
+        return null;
+    }
+}
+
 
 module.exports = {
     createUser,
@@ -163,5 +189,6 @@ module.exports = {
     getUserContext,
     // getUserIdByEmail
     updateUser,
-    deleteUser
+    deleteUser,
+    getUserCollection,
 }

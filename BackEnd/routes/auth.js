@@ -39,6 +39,7 @@ router.get('/check-auth', async (req, res) => {
 
         res.json({
             ok: true,
+            user_id: user.user_id,
             email: req.session.email,
             name: user.name,
             user_type_id: user.user_type_id,
