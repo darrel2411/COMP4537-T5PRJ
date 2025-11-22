@@ -8,16 +8,6 @@ const { messages } = require('../lang/messages/en/user');
 
 router.get('/check-auth', async (req, res) => {
     try {
-        // Debug logging
-        console.log('Check-auth request:', {
-            hasSession: !!req.session,
-            sessionId: req.session?.id,
-            authenticated: req.session?.authenticated,
-            email: req.session?.email,
-            cookieHeader: req.headers.cookie,
-            origin: req.headers.origin
-        });
-
         // If not authenticated, respond early
         if (!req.session.authenticated || !req.session.email) {
             return res.json({ ok: false, email: null, name: null, user_type_id: null });
@@ -45,7 +35,6 @@ router.get('/check-auth', async (req, res) => {
 
 router.post('/createUser', async (req, res) => {
     const { email, name, password } = req.body;
-    console.log(req.body);
 
     if (!email || !name || !password) {
         return res.status(400).json({ ok: false, msg: messages.invalidUserCreation });
@@ -104,25 +93,6 @@ router.post('/authenticateUser', async (req, res) => {
                                 msg: "Failed to save session" 
                             });
                         }
-
-                        // Note: express-session should set the cookie automatically
-                        // Check if it's been set (it might be set later when response ends)
-                        const setCookie = res.getHeader('Set-Cookie');
-                        if (!setCookie) {
-                            console.warn('WARNING: Set-Cookie header not set yet - express-session may set it when response ends');
-                        } else {
-                            console.log('Set-Cookie header found:', setCookie);
-                        }
-
-                        // Debug: Log session creation
-                        console.log('Login successful - Session created and saved:', {
-                            sessionId: req.session.id,
-                            authenticated: req.session.authenticated,
-                            email: req.session.email,
-                            cookieHeader: req.headers.cookie,
-                            origin: req.headers.origin,
-                            setCookieHeader: res.getHeader('Set-Cookie')
-                        });
 
                         // Send response - cookie should now be set
                         res.json({

@@ -34,14 +34,6 @@ async function logEndpointRequest(req, res, method, errorMessages = {}, userId =
             }
             userId = results[0].user_id;
         } else {
-            // Debug logging
-            console.log('Session check failed:', {
-                hasSession: !!req.session,
-                authenticated: req.session?.authenticated,
-                email: req.session?.email,
-                sessionId: req.session?.id,
-                cookies: req.headers.cookie
-            });
             res.status(401).json({ error: messages.unauthorized });
             return null;
         }

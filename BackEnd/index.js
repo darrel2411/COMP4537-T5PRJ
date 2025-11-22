@@ -63,37 +63,6 @@ app.use(session({
     }
 }));
 
-// Middleware to ensure cookie is set for modified sessions
-app.use((req, res, next) => {
-    const originalEnd = res.end;
-    res.end = function(...args) {
-        // If session was modified and no cookie is set, ensure it gets set
-        if (req.session && req.session.cookie && !req.sessionID) {
-            // Session exists but no ID - this shouldn't happen, but ensure cookie is set
-            console.log('Warning: Session exists but no sessionID');
-        }
-        return originalEnd.apply(this, args);
-    };
-    next();
-});
-
-// Debug middleware for session (only in production)
-if (isProd) {
-    app.use((req, res, next) => {
-        if (req.path.includes('/get-api-stats') || req.path.includes('/get-user-consumption')) {
-            console.log('Admin route request:', {
-                path: req.path,
-                hasSession: !!req.session,
-                sessionId: req.session?.id,
-                authenticated: req.session?.authenticated,
-                email: req.session?.email,
-                cookieHeader: req.headers.cookie,
-                origin: req.headers.origin
-            });
-        }
-        next();
-    });
-}
 
 // Importing routes
 const generalRoutes = require('./routes/general.js');
@@ -109,7 +78,4 @@ app.use('/api', birdModelRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-    console.log(`isProd: ${isProd}`);
-    console.log(`Cookie settings - sameSite: ${isProd ? 'none' : 'lax'}, secure: ${isProd}`);
 });
