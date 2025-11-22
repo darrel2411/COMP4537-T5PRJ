@@ -81,7 +81,9 @@ router.post('/authenticateUser', async (req, res) => {
                     ok: true,
                     email,
                     name: results[0].name,
-                    user_type_id: results[0].user_type_id
+                    user_type_id: results[0].user_type_id,
+                    api_consumption: results[0].api_consumption,
+                    score: results[0].score,
                 });
                 return;
             } else {
