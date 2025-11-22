@@ -72,9 +72,28 @@ router.post('/authenticateUser', async (req, res) => {
                 req.session.authenticated = true;
                 req.session.email = email;
                 req.session.name = results[0].name;
-
-                // res.json({ msg: messages.successAuthentication, ok: true });
                 req.session.user_type_id = results[0].user_type_id;
+
+                // Explicitly save session before sending response
+                await new Promise((resolve, reject) => {
+                    req.session.save((err) => {
+                        if (err) {
+                            console.error('Session save error:', err);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                // Debug: Log session creation
+                console.log('Login successful - Session created:', {
+                    sessionId: req.session.id,
+                    authenticated: req.session.authenticated,
+                    email: req.session.email,
+                    cookieHeader: req.headers.cookie,
+                    origin: req.headers.origin
+                });
 
                 res.json({
                     msg: messages.successAuthentication,
