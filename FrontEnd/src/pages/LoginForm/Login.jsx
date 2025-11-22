@@ -39,7 +39,7 @@ function Login() {
           email: data.email,
           name: data.name,
           userTypeId: data.user_type_id,
-          apiConsumption: data.apiConsumption,
+          apiConsumption: data.api_consumption,
           score: data.score,
         };
         setUser(newUser);
