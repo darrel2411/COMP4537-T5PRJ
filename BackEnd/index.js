@@ -39,21 +39,24 @@ const mongoStore = MongoStore.create({
     }
 });
 
+// Trust proxy in production (for Render/Cloudflare)
+if (isProd) {
+    app.set('trust proxy', 1);
+}
+
 app.use(session({
     secret: node_session_secret,
     store: mongoStore,
-    saveUninitialized: false,
-    resave: false,
+    saveUninitialized: false, // Don't save uninitialized sessions
+    resave: false, // Don't resave unchanged sessions
     name: 'connect.sid',
     cookie: {
         maxAge: expireTime,
         httpOnly: true,
         sameSite: isProd ? 'none' : 'lax',
-        secure: isProd,
-        // Explicitly don't set domain for cross-site cookies
-        domain: undefined
+        secure: isProd
+        // Don't set domain - let browser handle cross-site cookies
     },
-    // Ensure cookie is set even with saveUninitialized: false
     rolling: false,
     genid: (req) => {
         return require('crypto').randomBytes(16).toString('hex');

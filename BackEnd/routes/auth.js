@@ -95,22 +95,43 @@ router.post('/authenticateUser', async (req, res) => {
                     req.session.name = results[0].name;
                     req.session.user_type_id = results[0].user_type_id;
 
-                    // Debug: Log session creation
-                    console.log('Login successful - Session created:', {
-                        sessionId: req.session.id,
-                        authenticated: req.session.authenticated,
-                        email: req.session.email,
-                        cookieHeader: req.headers.cookie,
-                        origin: req.headers.origin
-                    });
+                    // Explicitly save session to ensure cookie is set
+                    req.session.save((saveErr) => {
+                        if (saveErr) {
+                            console.error('Session save error:', saveErr);
+                            return res.status(500).json({ 
+                                ok: false, 
+                                msg: "Failed to save session" 
+                            });
+                        }
 
-                    // Send response - cookie should be set via regenerate
-                    res.json({
-                        msg: messages.successAuthentication,
-                        ok: true,
-                        email,
-                        name: results[0].name,
-                        user_type_id: results[0].user_type_id
+                        // Note: express-session should set the cookie automatically
+                        // Check if it's been set (it might be set later when response ends)
+                        const setCookie = res.getHeader('Set-Cookie');
+                        if (!setCookie) {
+                            console.warn('WARNING: Set-Cookie header not set yet - express-session may set it when response ends');
+                        } else {
+                            console.log('Set-Cookie header found:', setCookie);
+                        }
+
+                        // Debug: Log session creation
+                        console.log('Login successful - Session created and saved:', {
+                            sessionId: req.session.id,
+                            authenticated: req.session.authenticated,
+                            email: req.session.email,
+                            cookieHeader: req.headers.cookie,
+                            origin: req.headers.origin,
+                            setCookieHeader: res.getHeader('Set-Cookie')
+                        });
+
+                        // Send response - cookie should now be set
+                        res.json({
+                            msg: messages.successAuthentication,
+                            ok: true,
+                            email,
+                            name: results[0].name,
+                            user_type_id: results[0].user_type_id
+                        });
                     });
                 });
                 return;
