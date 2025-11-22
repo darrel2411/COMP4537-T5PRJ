@@ -44,6 +44,7 @@ app.use(session({
     store: mongoStore,
     saveUninitialized: false,
     resave: false,
+    name: 'connect.sid',
     cookie: {
         maxAge: expireTime,
         // sameSite: 'lax',   // allow cross-port requests on localhost
@@ -51,8 +52,31 @@ app.use(session({
         httpOnly: true,
         sameSite: isProd ? 'none' : 'lax',
         secure: isProd,
+        // Don't set domain - let browser handle it
     }
 }));
+
+// Middleware to log Set-Cookie headers on responses (for debugging)
+if (isProd) {
+    app.use((req, res, next) => {
+        // Log Set-Cookie after response is sent
+        const originalJson = res.json;
+        res.json = function(body) {
+            if (req.path.includes('/authenticateUser') && body && body.ok) {
+                // Check after the response is being prepared
+                setTimeout(() => {
+                    const headers = res.getHeaders();
+                    console.log('Response headers after login:', {
+                        setCookie: headers['set-cookie'],
+                        allHeaders: Object.keys(headers)
+                    });
+                }, 100);
+            }
+            return originalJson.call(this, body);
+        };
+        next();
+    });
+}
 
 // Debug middleware for session (only in production)
 if (isProd) {

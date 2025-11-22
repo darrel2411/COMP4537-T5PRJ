@@ -8,6 +8,16 @@ const { messages } = require('../lang/messages/en/user');
 
 router.get('/check-auth', async (req, res) => {
     try {
+        // Debug logging
+        console.log('Check-auth request:', {
+            hasSession: !!req.session,
+            sessionId: req.session?.id,
+            authenticated: req.session?.authenticated,
+            email: req.session?.email,
+            cookieHeader: req.headers.cookie,
+            origin: req.headers.origin
+        });
+
         // If not authenticated, respond early
         if (!req.session.authenticated || !req.session.email) {
             return res.json({ ok: false, email: null, name: null, user_type_id: null });
@@ -74,33 +84,32 @@ router.post('/authenticateUser', async (req, res) => {
                 req.session.name = results[0].name;
                 req.session.user_type_id = results[0].user_type_id;
 
-                // Explicitly save session before sending response
-                await new Promise((resolve, reject) => {
-                    req.session.save((err) => {
-                        if (err) {
-                            console.error('Session save error:', err);
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
+                // Save session and send response
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('Session save error:', err);
+                        return res.status(500).json({ 
+                            ok: false, 
+                            msg: "Failed to create session" 
+                        });
+                    }
+
+                    // Debug: Log session creation
+                    console.log('Login successful - Session saved:', {
+                        sessionId: req.session.id,
+                        authenticated: req.session.authenticated,
+                        email: req.session.email,
+                        cookieHeader: req.headers.cookie,
+                        origin: req.headers.origin
                     });
-                });
 
-                // Debug: Log session creation
-                console.log('Login successful - Session created:', {
-                    sessionId: req.session.id,
-                    authenticated: req.session.authenticated,
-                    email: req.session.email,
-                    cookieHeader: req.headers.cookie,
-                    origin: req.headers.origin
-                });
-
-                res.json({
-                    msg: messages.successAuthentication,
-                    ok: true,
-                    email,
-                    name: results[0].name,
-                    user_type_id: results[0].user_type_id
+                    res.json({
+                        msg: messages.successAuthentication,
+                        ok: true,
+                        email,
+                        name: results[0].name,
+                        user_type_id: results[0].user_type_id
+                    });
                 });
                 return;
             } else {
