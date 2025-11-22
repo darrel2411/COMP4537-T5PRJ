@@ -54,6 +54,24 @@ app.use(session({
     }
 }));
 
+// Debug middleware for session (only in production)
+if (isProd) {
+    app.use((req, res, next) => {
+        if (req.path.includes('/get-api-stats') || req.path.includes('/get-user-consumption')) {
+            console.log('Admin route request:', {
+                path: req.path,
+                hasSession: !!req.session,
+                sessionId: req.session?.id,
+                authenticated: req.session?.authenticated,
+                email: req.session?.email,
+                cookieHeader: req.headers.cookie,
+                origin: req.headers.origin
+            });
+        }
+        next();
+    });
+}
+
 // Importing routes
 const generalRoutes = require('./routes/general.js');
 const authRoutes = require('./routes/auth.js');
@@ -68,4 +86,7 @@ app.use('/api', birdModelRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+    console.log(`isProd: ${isProd}`);
+    console.log(`Cookie settings - sameSite: ${isProd ? 'none' : 'lax'}, secure: ${isProd}`);
 });

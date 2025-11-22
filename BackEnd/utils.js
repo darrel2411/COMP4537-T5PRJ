@@ -26,7 +26,7 @@ async function logEndpointRequest(req, res, method, errorMessages = {}, userId =
     if (userId === null) {
         if (req.user && req.user.id) {
             userId = req.user.id;
-        } else if (req.session.authenticated && req.session.email) {
+        } else if (req.session && req.session.authenticated && req.session.email) {
             const results = await db_users.getUser(req.session.email);
             if (!results || results.length === 0) {
                 res.status(404).json({ error: messages.userNotFound });
@@ -34,6 +34,14 @@ async function logEndpointRequest(req, res, method, errorMessages = {}, userId =
             }
             userId = results[0].user_id;
         } else {
+            // Debug logging
+            console.log('Session check failed:', {
+                hasSession: !!req.session,
+                authenticated: req.session?.authenticated,
+                email: req.session?.email,
+                sessionId: req.session?.id,
+                cookies: req.headers.cookie
+            });
             res.status(401).json({ error: messages.unauthorized });
             return null;
         }
