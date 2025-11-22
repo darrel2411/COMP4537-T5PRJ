@@ -21,6 +21,12 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
 import en from "./en";
 
 function Landing() {
@@ -207,131 +213,161 @@ function Landing() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex justify-end px-4 pt-4">
-        <Sheet>
-          <SheetTrigger className="px-4 py-2">Profile</SheetTrigger>
-
-          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-center text-3xl font-semibold">
-                Profile Settings
-              </SheetTitle>
-              <SheetDescription className="text-center">
-                Manage your profile information and account settings.
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="mt-4 space-y-6">
-              {/* Profile fields */}
-              <div className="space-y-4">
-                <FieldSeparator />
-
-                <FieldGroup className="pt-4 space-y-4">
-                  {/* Email – read only */}
-                  <Field>
-                    <FieldLabel>Email</FieldLabel>
-                    <Input
-                      value={user?.email || ""}
-                      readOnly
-                      className="bg-gray-100 cursor-not-allowed"
-                    />
-                    <FieldDescription>Email cannot be changed</FieldDescription>
-                  </Field>
-
-                  {/* Name – controlled, disabled when not editing */}
-                  <Field>
-                    <FieldLabel>Name</FieldLabel>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={!isEditing}
-                      required
-                    />
-                  </Field>
-
-                  {/* Passwords – controlled, disabled when not editing */}
-                  <Field>
-                    <FieldLabel>Current Password</FieldLabel>
-                    <Input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      disabled={!isEditing}
-                      placeholder="************"
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel>New Password</FieldLabel>
-                    <Input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={!isEditing}
-                      placeholder="************"
-                    />
-                    <FieldDescription>
-                      Leave password fields empty if you only want to change
-                      your name.
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-
-                {/* error / success messages */}
-                {profileError && (
-                  <p className="mt-1 text-sm text-red-600">{profileError}</p>
-                )}
-                {profileSuccess && (
-                  <p className="mt-1 text-sm text-green-600">
-                    {profileSuccess}
-                  </p>
-                )}
-
-                {/* actions */}
-                <div className="mt-4 flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleEditProfile}
-                    disabled={isEditing}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleSaveProfile}
-                    disabled={!isEditing || savingProfile}
-                  >
-                    {savingProfile ? "Saving..." : "Save"}
-                  </Button>
+      {/* row with Popover on the left, Profile on the right */}
+      <div className="flex items-center px-4 pt-4">
+        {/* Left side: Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">Stats</Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-60">
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Stats</h4>
+              </div>
+              <div className="grid gap-2">
+                <div className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor="width">Score</Label>
+                  <Input
+                    id="width"
+                    defaultValue="100%"
+                    className="col-span-2 cursor-not-allowed"
+                    readOnly
+                  />
                 </div>
               </div>
-
-              {/* Danger zone */}
-              {user && (
-                <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-destructive">
-                      Danger zone
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      This action cannot be undone. Deleting your account will
-                      permanently remove your data from our servers.
-                    </p>
-                  </div>
-
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteUser}
-                    disabled={loading}
-                    className="w-full"
-                  >
-                    {loading ? "Deleting..." : "Delete Account"}
-                  </Button>
-                </section>
-              )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </PopoverContent>
+        </Popover>
+
+        {/* Right side: Profile sheet */}
+        <div className="ml-auto">
+          <Sheet>
+            <SheetTrigger className="px-4 py-2">Profile</SheetTrigger>
+            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-center text-3xl font-semibold">
+                  Profile Settings
+                </SheetTitle>
+                <SheetDescription className="text-center">
+                  Manage your profile information and account settings.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-6">
+                {/* Profile fields */}
+                <div className="space-y-4">
+                  <FieldSeparator />
+
+                  <FieldGroup className="pt-4 space-y-4">
+                    {/* Email – read only */}
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <Input
+                        value={user?.email || ""}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                      />
+                      <FieldDescription>
+                        Email cannot be changed
+                      </FieldDescription>
+                    </Field>
+
+                    {/* Name – controlled, disabled when not editing */}
+                    <Field>
+                      <FieldLabel>Name</FieldLabel>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={!isEditing}
+                        required
+                      />
+                    </Field>
+
+                    {/* Passwords – controlled, disabled when not editing */}
+                    <Field>
+                      <FieldLabel>Current Password</FieldLabel>
+                      <Input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="************"
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>New Password</FieldLabel>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="************"
+                      />
+                      <FieldDescription>
+                        Leave password fields empty if you only want to change
+                        your name.
+                      </FieldDescription>
+                    </Field>
+                  </FieldGroup>
+
+                  {/* error / success messages */}
+                  {profileError && (
+                    <p className="mt-1 text-sm text-red-600">{profileError}</p>
+                  )}
+                  {profileSuccess && (
+                    <p className="mt-1 text-sm text-green-600">
+                      {profileSuccess}
+                    </p>
+                  )}
+
+                  {/* actions */}
+                  <div className="mt-4 flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleEditProfile}
+                      disabled={isEditing}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleSaveProfile}
+                      disabled={!isEditing || savingProfile}
+                    >
+                      {savingProfile ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Danger zone */}
+                {user && (
+                  <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-destructive">
+                        Danger zone
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        This action cannot be undone. Deleting your account will
+                        permanently remove your data from our servers.
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteUser}
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? "Deleting..." : "Delete Account"}
+                    </Button>
+                  </section>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-8">
         {/* Random Bird Image in the center */}
