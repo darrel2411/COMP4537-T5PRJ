@@ -1,38 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const db_admin = include("database/admin");
-const db_users = include('database/users');
-const db_logging = include('database/logging');
+const { logEndpointRequest } = require("../utils");
 const { messages } = require("../lang/messages/en/user")
 
 router.get('/get-all-users', async (req, res) => {
     try {
-        let userId;
-        if (req.user && req.user.id) {
-            userId = req.user.id;
-        } else if (req.session.authenticated && req.session.email) {
-            const results = await db_users.getUser(req.session.email);
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: messages.userNotFound });
-            }
-            userId = results[0].user_id;
-        } else {
-            return res.status(401).json({ error: messages.unauthorized });
-        }
-
-        const methodId = await db_logging.getOrCreateMethod("GET");
-        if (!methodId) {
-            console.error("Failed to get or create method");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        const endpointId = await db_logging.getOrCreateEndpoint(methodId, req.baseUrl + req.path);
-        if (!endpointId) {
-            console.error("Failed to get or create endpoint");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        await db_logging.logRequest(endpointId, userId);
+        const userId = await logEndpointRequest(req, res, "GET", {
+            userNotFound: messages.userNotFound,
+            unauthorized: messages.unauthorized,
+            failedToLogRequest: "Failed to log request"
+        });
+        if (!userId) return; // Error response already sent
 
         const users = await db_admin.getAllUsers();
 
@@ -52,32 +31,12 @@ router.get('/get-all-users', async (req, res) => {
 
 router.get('/get-api-stats', async (req, res) => {
     try {
-        let userId;
-        if (req.user && req.user.id) {
-            userId = req.user.id;
-        } else if (req.session.authenticated && req.session.email) {
-            const results = await db_users.getUser(req.session.email);
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: messages.userNotFound });
-            }
-            userId = results[0].user_id;
-        } else {
-            return res.status(401).json({ error: messages.unauthorized });
-        }
-
-        const methodId = await db_logging.getOrCreateMethod("GET");
-        if (!methodId) {
-            console.error("Failed to get or create method");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        const endpointId = await db_logging.getOrCreateEndpoint(methodId, req.baseUrl + req.path);
-        if (!endpointId) {
-            console.error("Failed to get or create endpoint");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        await db_logging.logRequest(endpointId, userId);
+        const userId = await logEndpointRequest(req, res, "GET", {
+            userNotFound: messages.userNotFound,
+            unauthorized: messages.unauthorized,
+            failedToLogRequest: "Failed to log request"
+        });
+        if (!userId) return; // Error response already sent
 
         const apiStats = await db_admin.getApiStats();
 
@@ -96,32 +55,12 @@ router.get('/get-api-stats', async (req, res) => {
 
 router.get('/get-user-consumption', async (req, res) => {
     try {
-        let userId;
-        if (req.user && req.user.id) {
-            userId = req.user.id;
-        } else if (req.session.authenticated && req.session.email) {
-            const results = await db_users.getUser(req.session.email);
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: messages.userNotFound });
-            }
-            userId = results[0].user_id;
-        } else {
-            return res.status(401).json({ error: messages.unauthorized });
-        }
-
-        const methodId = await db_logging.getOrCreateMethod("GET");
-        if (!methodId) {
-            console.error("Failed to get or create method");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        const endpointId = await db_logging.getOrCreateEndpoint(methodId, req.baseUrl + req.path);
-        if (!endpointId) {
-            console.error("Failed to get or create endpoint");
-            return res.status(500).json({ error: "Failed to log request" });
-        }
-
-        await db_logging.logRequest(endpointId, userId);
+        const userId = await logEndpointRequest(req, res, "GET", {
+            userNotFound: messages.userNotFound,
+            unauthorized: messages.unauthorized,
+            failedToLogRequest: "Failed to log request"
+        });
+        if (!userId) return; // Error response already sent
 
         const userConsumption = await db_admin.getUserConsumption();
 

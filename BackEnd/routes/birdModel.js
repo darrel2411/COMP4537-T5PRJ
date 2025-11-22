@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const router = express.Router();
 const db_birds = include('database/birds');
-const db_logging = include('database/logging');
+const { logEndpointRequest } = require('../utils');
 const messages = require('../lang/messages/en/bird');
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -49,19 +49,12 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
 
     await db_birds.incrementApiConsumption(userId);
 
-    const methodId = await db_logging.getOrCreateMethod("POST");
-    if (!methodId) {
-      console.error("Failed to get or create method");
-      return res.status(500).json({ error: messages.failedToLogRequest });
-    }
-
-    const endpointId = await db_logging.getOrCreateEndpoint(methodId, req.baseUrl + req.path);
-    if (!endpointId) {
-      console.error("Failed to get or create endpoint");
-      return res.status(500).json({ error: messages.failedToLogRequest });
-    }
-
-    await db_logging.logRequest(endpointId, userId);
+    const loggedUserId = await logEndpointRequest(req, res, "POST", {
+      userNotFound: messages.userNotFound,
+      unauthorized: messages.unauthorized,
+      failedToLogRequest: messages.failedToLogRequest
+    }, userId);
+    if (!loggedUserId) return; // Error response already sent
 
     // Forward the request to the bird classification model
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
