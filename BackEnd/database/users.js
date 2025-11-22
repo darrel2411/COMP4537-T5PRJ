@@ -30,7 +30,7 @@ async function createUser(userData) {
 
 async function getUser(email) {
     const getUserSQL = `
-        SELECT user_id, email, password, name, user_type_id
+        SELECT user_id, email, password, name, user_type_id, api_consumption, score
         FROM user
         WHERE email = :email;
     `;
@@ -53,7 +53,7 @@ async function getUser(email) {
 
 async function getUserContext(email) {
     const getUserContextSQL = `
-        SELECT email, name, user_type_id 
+        SELECT email, name, user_type_id, api_consumption, score
         FROM user
         WHERE email = :email;
     `;

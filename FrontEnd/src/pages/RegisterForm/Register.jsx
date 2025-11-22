@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function Register() {
   const [error, setError] = useState("");
@@ -10,6 +11,7 @@ function Register() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
   const API_BASE = import.meta.env.VITE_API_BASE;
 
   const handleSubmit = async (e) => {
@@ -37,6 +39,7 @@ function Register() {
       if (data.ok) {
         console.log(data);
         setSuccess("User created successfully");
+        navigate("/login");
         // window.location.href = "/";
       } else {
         setError(data.msg);

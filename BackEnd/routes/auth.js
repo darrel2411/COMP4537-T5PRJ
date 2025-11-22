@@ -5,6 +5,13 @@ const saltRounds = 12;
 
 const db_users = include('database/users');
 const { messages } = require('../lang/messages/en/user');
+const { logEndpointRequest } = require('../utils');
+
+const logMessages = {
+    userNotFound: messages.userNotFound,
+    unauthorized: messages.unauthorized,
+    failedToLogRequest: messages.failedToLogRequest,
+};
 
 router.get('/check-auth', async (req, res) => {
     try {
@@ -21,11 +28,22 @@ router.get('/check-auth', async (req, res) => {
             return res.json({ ok: false, email: req.session.email, name: null, user_type_id: null });
         }
 
+        const loggedUserId = await logEndpointRequest(
+            req,
+            res,
+            "GET",
+            logMessages,
+            user.user_id
+        );
+        if (!loggedUserId) return;
+
         res.json({
             ok: true,
             email: req.session.email,
             name: user.name,
-            user_type_id: user.user_type_id
+            user_type_id: user.user_type_id,
+            api_consumption: user.api_consumption,
+            score: user.score,
         });
     } catch (err) {
         console.error("Error in /check-auth:", err);
@@ -52,6 +70,22 @@ router.post('/createUser', async (req, res) => {
         req.session.authenticated = true;
         req.session.email = email;
 
+        // fetch created user to get user_id
+        const created = await db_users.getUser(email.trim());
+        const user = Array.isArray(created) ? created[0] : created;
+        const userId = user?.user_id ?? null;
+
+        if (userId) {
+            const loggedUserId = await logEndpointRequest(
+                req,
+                res,
+                "POST",
+                logMessages,
+                userId
+            );
+            if (!loggedUserId) return;
+        }
+
         res.status(200).json({ msg: messages.successUserCreation, ok: true });
         return;
     }
@@ -66,15 +100,16 @@ router.post('/authenticateUser', async (req, res) => {
 
     if (results) {
         if (results.length == 1) { // There should only be one user
+            const user = results[0];
             const isMatch = await bcrypt.compare(password, results[0].password);
             if (isMatch) {
                 // Regenerate session to ensure new cookie is set
                 req.session.regenerate((err) => {
                     if (err) {
                         console.error('Session regenerate error:', err);
-                        return res.status(500).json({ 
-                            ok: false, 
-                            msg: "Failed to create session" 
+                        return res.status(500).json({
+                            ok: false,
+                            msg: "Failed to create session"
                         });
                     }
 
@@ -85,22 +120,32 @@ router.post('/authenticateUser', async (req, res) => {
                     req.session.user_type_id = results[0].user_type_id;
 
                     // Explicitly save session to ensure cookie is set
-                    req.session.save((saveErr) => {
+                    req.session.save(async (saveErr) => {
                         if (saveErr) {
                             console.error('Session save error:', saveErr);
-                            return res.status(500).json({ 
-                                ok: false, 
-                                msg: "Failed to save session" 
+                            return res.status(500).json({
+                                ok: false,
+                                msg: "Failed to save session"
                             });
                         }
 
-                        // Send response - cookie should now be set
+                        const loggedUserId = await logEndpointRequest(
+                            req,
+                            res,
+                            "POST",
+                            logMessages,
+                            user.user_id           // <- we already know it
+                        );
+                        if (!loggedUserId) return; // logging failed & response already sent
+
                         res.json({
                             msg: messages.successAuthentication,
                             ok: true,
                             email,
                             name: results[0].name,
-                            user_type_id: results[0].user_type_id
+                            user_type_id: results[0].user_type_id,
+                            api_consumption: results[0].api_consumption,
+                            score: results[0].score,
                         });
                     });
                 });
@@ -181,63 +226,6 @@ router.delete('/delete-user/:email', async (req, res) => {
             msg: "Server error while deleting user",
         });
     }
-    // try {
-    //     // Debug: Log request info
-    //     console.log('Delete user - Request headers:', {
-    //         cookie: req.headers.cookie,
-    //         origin: req.headers.origin,
-    //         referer: req.headers.referer
-    //     });
-
-    //     // Debug: Log session info
-    //     console.log('Delete user - Session:', {
-    //         authenticated: req.session?.authenticated,
-    //         email: req.session?.email,
-    //         user_type_id: req.session?.user_type_id,
-    //         sessionId: req.sessionID,
-    //         sessionExists: !!req.session
-    //     });
-
-    //     // Check if user is authenticated
-    //     if (!req.session || !req.session.authenticated || !req.session.email) {
-    //         console.log('Unauthorized - Session check failed. Session:', req.session);
-    //         return res.status(401).json({ 
-    //             ok: false, 
-    //             msg: messages.unauthorizedAccess 
-    //         });
-    //     }
-
-    //     const email = req.session.email;
-
-    //     // Users can delete their own account
-    //     // The email comes from the session, so it's always their own account
-    //     const success = await db_admin.deleteUser(email.trim());
-
-    //     if (success) {
-    //         // Destroy session after successful deletion
-    //         req.session.destroy((err) => {
-    //             if (err) {
-    //                 console.error("Error destroying session after user deletion:", err);
-    //             }
-    //         });
-
-    //         return res.json({
-    //             ok: true,
-    //             msg: messages.successDeleteUser
-    //         });
-    //     }
-
-    //     res.status(404).json({ 
-    //         ok: false, 
-    //         msg: messages.userNotFound 
-    //     });
-    // } catch (err) {
-    //     console.error("Error in /delete-user:", err);
-    //     res.status(500).json({ 
-    //         ok: false, 
-    //         msg: messages.errorDeleteUser 
-    //     });
-    // }
 });
 
 router.patch('/user/:email', async (req, res) => {
@@ -324,6 +312,15 @@ router.patch('/user/:email', async (req, res) => {
         if (updateData.name) {
             req.session.name = updateData.name;
         }
+
+        const loggedUserId = await logEndpointRequest(
+            req,
+            res,
+            "PATCH",
+            logMessages,
+            user.user_id
+        );
+        if (!loggedUserId) return;
 
         return res.json({
             ok: true,

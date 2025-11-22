@@ -21,19 +21,28 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { WeatherBadge } from "@/components/Weather/WeatherBadge";
+import { User as ProfileIcon, BarChart3 } from "lucide-react";
+
 import en from "./en";
 
 function Landing() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
+  const LOGO_URL = "/logo.png";
 
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [randomBirdImage, setRandomBirdImage] = useState("");
+  const [displayImage, setDisplayImage] = useState(LOGO_URL);
 
   // for profile settings purpose
   const [isEditing, setIsEditing] = useState(false);
@@ -45,34 +54,25 @@ function Landing() {
   const [profileSuccess, setProfileSuccess] = useState("");
 
   const fileInputRef = useRef(null);
-
   const API_BASE = import.meta.env.VITE_API_BASE;
 
   // Fetch a random bird image when component mounts
   useEffect(() => {
     if (user?.name) setName(user.name);
-    fetchRandomBirdImage();
   }, [user]);
-
-  const fetchRandomBirdImage = () => {
-    // Using a random bird image from Unsplash Source API (no auth required)
-    // This generates a random bird image each time
-    const birdImages = [
-      "https://images.unsplash.com/photo-1444464666168-49d633b86797?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1549608276-5786777e6587?w=800&h=600&fit=crop",
-    ];
-
-    // Pick a random bird image
-    const randomIndex = Math.floor(Math.random() * birdImages.length);
-    setRandomBirdImage(birdImages[randomIndex]);
-  };
 
   const onPick = (e) => {
     const f = e.target.files?.[0];
     setFile(f || null);
     setResult(null);
     setError("");
-    if (f) setPreview(URL.createObjectURL(f));
+    if (f) {
+      const url = URL.createObjectURL(f);
+      setDisplayImage(url);
+    } else {
+      // no file selected, fall back to logo
+      setDisplayImage(LOGO_URL);
+    }
   };
 
   const handleTakePhoto = () => {
@@ -104,6 +104,23 @@ function Landing() {
       }
       const data = await res.json().catch(() => ({}));
       setResult(data);
+
+      // update user stats in context
+      setUser((prev) => {
+        if (!prev) return prev;
+
+        // score coming from backend response
+        const newScore = data.score; // fallback if backend didn’t send it
+
+        return {
+          ...prev,
+          apiConsumption: (prev.apiConsumption ?? 0) + 1,
+          score: newScore,
+        };
+      });
+
+      // hide Predict / Cancel buttons after a successful upload
+      setFile(null);
     } catch (err) {
       setError(err.message || "Upload failed");
     } finally {
@@ -207,147 +224,211 @@ function Landing() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex justify-end px-4 pt-4">
-        <Sheet>
-          <SheetTrigger className="px-4 py-2">Profile</SheetTrigger>
-
-          <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-center text-3xl font-semibold">
-                Profile Settings
-              </SheetTitle>
-              <SheetDescription className="text-center">
-                Manage your profile information and account settings.
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="mt-4 space-y-6">
-              {/* Profile fields */}
-              <div className="space-y-4">
-                <FieldSeparator />
-
-                <FieldGroup className="pt-4 space-y-4">
-                  {/* Email – read only */}
-                  <Field>
-                    <FieldLabel>Email</FieldLabel>
-                    <Input
-                      value={user?.email || ""}
-                      readOnly
-                      className="bg-gray-100 cursor-not-allowed"
-                    />
-                    <FieldDescription>Email cannot be changed</FieldDescription>
-                  </Field>
-
-                  {/* Name – controlled, disabled when not editing */}
-                  <Field>
-                    <FieldLabel>Name</FieldLabel>
-                    <Input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      disabled={!isEditing}
-                      required
-                    />
-                  </Field>
-
-                  {/* Passwords – controlled, disabled when not editing */}
-                  <Field>
-                    <FieldLabel>Current Password</FieldLabel>
-                    <Input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      disabled={!isEditing}
-                      placeholder="************"
-                    />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel>New Password</FieldLabel>
-                    <Input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      disabled={!isEditing}
-                      placeholder="************"
-                    />
-                    <FieldDescription>
-                      Leave password fields empty if you only want to change
-                      your name.
-                    </FieldDescription>
-                  </Field>
-                </FieldGroup>
-
-                {/* error / success messages */}
-                {profileError && (
-                  <p className="mt-1 text-sm text-red-600">{profileError}</p>
-                )}
-                {profileSuccess && (
-                  <p className="mt-1 text-sm text-green-600">
-                    {profileSuccess}
-                  </p>
-                )}
-
-                {/* actions */}
-                <div className="mt-4 flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleEditProfile}
-                    disabled={isEditing}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleSaveProfile}
-                    disabled={!isEditing || savingProfile}
-                  >
-                    {savingProfile ? "Saving..." : "Save"}
-                  </Button>
+      {/* row with Popover on the left, Profile on the right */}
+      <div className="flex items-center px-4 pt-4">
+        {/* Left side: Popover */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="rounded-full h-16 w-16 border-gray-300 shadow-sm flex items-center justify-center  animate-pulse"
+              aria-label="Open stats"
+            >
+              <BarChart3 className="h-8 w-8" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-60">
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Stats</h4>
+              </div>
+              <div className="grid gap-2">
+                <div className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor="width">Score</Label>
+                  <Input
+                    id="width"
+                    value={user.score}
+                    className="col-span-2 cursor-not-allowed"
+                    readOnly
+                  />
+                </div>
+                <div className="grid grid-cols-3 items-center gap-4">
+                  <Label htmlFor="width">Calls</Label>
+                  <Input
+                    id="width"
+                    value={`${user?.apiConsumption ?? 0} / 20`}
+                    className="col-span-2 cursor-not-allowed"
+                    readOnly
+                  />
                 </div>
               </div>
+            </div>
+          </PopoverContent>
+        </Popover>
 
-              {/* Danger zone */}
-              {user && (
-                <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-destructive">
-                      Danger zone
-                    </h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      This action cannot be undone. Deleting your account will
-                      permanently remove your data from our servers.
+        {/* Right side: Profile sheet */}
+        <div className="ml-auto">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                className="rounded-full h-16 w-16 border-gray-300 shadow-sm flex items-center justify-center"
+                aria-label="Open profile settings"
+              >
+                <ProfileIcon className="h-8 w-8" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-center text-3xl font-semibold">
+                  Profile Settings
+                </SheetTitle>
+                <SheetDescription className="text-center">
+                  Manage your profile information and account settings.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-6">
+                {/* Profile fields */}
+                <div className="space-y-4">
+                  <FieldSeparator />
+
+                  <FieldGroup className="pt-4 space-y-4">
+                    {/* Email – read only */}
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <Input
+                        value={user?.email || ""}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                      />
+                      <FieldDescription>
+                        Email cannot be changed
+                      </FieldDescription>
+                    </Field>
+
+                    {/* Name – controlled, disabled when not editing */}
+                    <Field>
+                      <FieldLabel>Name</FieldLabel>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={!isEditing}
+                        required
+                      />
+                    </Field>
+
+                    {/* Passwords – controlled, disabled when not editing */}
+                    <Field>
+                      <FieldLabel>Current Password</FieldLabel>
+                      <Input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="************"
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>New Password</FieldLabel>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        disabled={!isEditing}
+                        placeholder="************"
+                      />
+                      <FieldDescription>
+                        Leave password fields empty if you only want to change
+                        your name.
+                      </FieldDescription>
+                    </Field>
+                  </FieldGroup>
+
+                  {/* error / success messages */}
+                  {profileError && (
+                    <p className="mt-1 text-sm text-red-600">{profileError}</p>
+                  )}
+                  {profileSuccess && (
+                    <p className="mt-1 text-sm text-green-600">
+                      {profileSuccess}
                     </p>
-                  </div>
+                  )}
 
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteUser}
-                    disabled={loading}
-                    className="w-full"
-                  >
-                    {loading ? "Deleting..." : "Delete Account"}
-                  </Button>
-                </section>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
+                  {/* actions */}
+                  <div className="mt-4 flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleEditProfile}
+                      disabled={isEditing}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={handleSaveProfile}
+                      disabled={!isEditing || savingProfile}
+                    >
+                      {savingProfile ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Danger zone */}
+                {user && (
+                  <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-destructive">
+                        Danger zone
+                      </h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        This action cannot be undone. Deleting your account will
+                        permanently remove your data from our servers.
+                      </p>
+                    </div>
+
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteUser}
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      {loading ? "Deleting..." : "Delete Account"}
+                    </Button>
+                  </section>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-8">
-        {/* Random Bird Image in the center */}
-        <div className="mb-8">
-          {randomBirdImage ? (
-            <img
-              src={randomBirdImage}
-              alt="Random bird"
-              className="max-w-md w-full h-auto rounded-lg shadow-lg object-cover"
-              style={{ maxHeight: "500px" }}
-            />
-          ) : (
-            <div className="max-w-md w-full h-96 bg-gray-200 rounded-lg shadow-lg flex items-center justify-center">
-              <p className="text-gray-500">Loading bird image...</p>
+      <div className="flex flex-col items-center justify-center min-h-[calc(80vh-4rem)] px-4 py-8">
+        {/* Greeting banner */}
+        <div className="w-full max-w-2xl mb-8">
+          <div className="rounded-2xl bg-linear-to-r from-blue-500 to-indigo-500 px-6 py-4 shadow-md flex items-center justify-between">
+            <div>
+              <p className="text-sm text-blue-100">
+                {user ? `Hi, ${user.name}!` : "Welcome back!"}
+              </p>
+              <p className="mt-1 text-sm text-white">
+                Ready to spot your next bird? Upload a photo and we’ll help you
+                identify it.
+              </p>
             </div>
-          )}
+            {/* Weather widget on the right (hidden on very small screens) */}
+            <div className="hidden sm:block">
+              <WeatherBadge />
+            </div>
+          </div>
+        </div>
+        {/* Center image: logo or user photo */}
+        <div className="mb-8 max-w-md w-full">
+          <img
+            src={displayImage}
+            alt="Bird preview"
+            className="w-full max-w-md max-h-[500px] rounded-lg shadow-lg object-contain bg-gray-100"
+          />
         </div>
 
         {/* Take a Photo Button */}
@@ -371,13 +452,8 @@ function Landing() {
           />
 
           {/* Preview of selected image */}
-          {preview && (
+          {file && (
             <div className="mt-4 w-full max-w-md">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full rounded-lg shadow-md"
-              />
               <div className="mt-4 flex gap-2">
                 <Button
                   onClick={handleUpload}
@@ -389,9 +465,9 @@ function Landing() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setPreview("");
                     setFile(null);
                     setResult(null);
+                    setDisplayImage(LOGO_URL);
                   }}
                 >
                   Cancel
