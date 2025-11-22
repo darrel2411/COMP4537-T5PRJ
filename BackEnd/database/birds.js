@@ -205,15 +205,16 @@ async function getRareTypeInfo(rareTypeId) {
 /**
  * Create an image entry and return the img_id
  */
-async function createImageEntry(imgTitle, imgUrl = '') {
+async function createImageEntry(data) {
     const createImageSQL = `
-        INSERT INTO image (img_title, img_url)
-        VALUES (:img_title, :img_url);
+        INSERT INTO image (img_title, img_url, img_public_id)
+        VALUES (:img_title, :img_url, :img_public_id);
     `;
 
     const params = {
-        img_title: imgTitle || 'bird_image',
-        img_url: imgUrl
+        img_title: data.img_title,
+        img_url: data.img_url,
+        img_public_id: data.img_public_id,
     };
 
     try {

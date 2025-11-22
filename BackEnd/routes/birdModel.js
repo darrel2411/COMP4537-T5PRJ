@@ -8,10 +8,13 @@ const router = express.Router();
 const db_birds = include('database/birds');
 const { logEndpointRequest } = require('../utils');
 const messages = require('../lang/messages/en/bird');
+const { imgMessages } = require('../lang/messages/en/images');
 
 const upload = multer({ storage: multer.memoryStorage() });
+const { Readable } = require('stream');
+const cloudinary = require('../cloudinaryConfig.js');
 
-const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:3000";
+const MODEL_API_URL = process.env.MODEL_API_URL;
 
 // ───────────────────────────────────────────────
 // POST /api/analyze-bird
@@ -83,13 +86,16 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
     if (bird) {
       const isInCollection = await db_birds.checkBirdInCollection(userId, bird.bird_id);
 
-      if (!isInCollection) {
+      if (!isInCollection) {        
         // Bird is not in collection - add it
-        // Create an image entry for the collection (img_id is required)
-        const imgId = await db_birds.createImageEntry(
-          req.file.originalname || 'bird_image',
-          '' // img_url can be empty for now
-        );
+
+        const uploadResult = await uploadImageToCloudinary(req.file.buffer);
+
+        const imgId = await db_birds.createImageEntry({
+          img_title: req.file.originalname || "Bird Image",
+          img_url: uploadResult.secure_url,
+          img_public_id: uploadResult.public_id,
+        });
 
         if (imgId) {
           await db_birds.addBirdToCollection(userId, bird.bird_id, imgId);
@@ -123,5 +129,30 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
     });
   }
 });
+
+async function uploadImageToCloudinary(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const bufferToStream = (buffer) => {
+      const readable = new Readable();
+      readable._read = () => {};
+      readable.push(buffer);
+      readable.push(null);
+      return readable;
+    };
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "birds",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    bufferToStream(fileBuffer).pipe(stream);
+  });
+}
 
 module.exports = router;
