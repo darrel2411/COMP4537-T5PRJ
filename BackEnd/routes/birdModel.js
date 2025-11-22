@@ -76,7 +76,7 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
     const { label, probability, classId } = classifierResult;
 
     const bird = await db_birds.findBirdByName(label);
-    
+
     let message = "";
     let updatedScore = user.score;
 
@@ -117,9 +117,9 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
 
   } catch (err) {
     console.error("Error in analyze-bird endpoint:", err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: messages.internalServerError,
-      details: err.message 
+      details: err.message
     });
   }
 });
