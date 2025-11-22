@@ -26,8 +26,8 @@ router.get('/check-auth', async (req, res) => {
             email: req.session.email,
             name: user.name,
             user_type_id: user.user_type_id,
-            api_consumption: results[0].api_consumption,
-            score: results[0].score,
+            api_consumption: user.api_consumption,
+            score: user.score,
         });
     } catch (err) {
         console.error("Error in /check-auth:", err);
