@@ -6,12 +6,15 @@ require("dotenv").config();
 
 const router = express.Router();
 const db_birds = include('database/birds');
-const db_logging = include('database/logging');
-const { messages } = require('../lang/messages/en/bird');
+const { logEndpointRequest } = require('../utils');
+const messages = require('../lang/messages/en/bird');
+const { imgMessages } = require('../lang/messages/en/images');
 
 const upload = multer({ storage: multer.memoryStorage() });
+const { Readable } = require('stream');
+const cloudinary = require('../cloudinaryConfig.js');
 
-const MODEL_API_URL = process.env.MODEL_API_URL || "http://localhost:3000";
+const MODEL_API_URL = process.env.MODEL_API_URL;
 
 // ───────────────────────────────────────────────
 // POST /api/analyze-bird
@@ -49,19 +52,12 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
 
     await db_birds.incrementApiConsumption(userId);
 
-    const methodId = await db_logging.getOrCreateMethod("POST");
-    if (!methodId) {
-      console.error("Failed to get or create method");
-      return res.status(500).json({ error: messages.failedToLogRequest });
-    }
-
-    const endpointId = await db_logging.getOrCreateEndpoint(methodId, "/api/analyze-bird");
-    if (!endpointId) {
-      console.error("Failed to get or create endpoint");
-      return res.status(500).json({ error: messages.failedToLogRequest });
-    }
-
-    await db_logging.logRequest(endpointId, userId);
+    const loggedUserId = await logEndpointRequest(req, res, "POST", {
+      userNotFound: messages.userNotFound,
+      unauthorized: messages.unauthorized,
+      failedToLogRequest: messages.failedToLogRequest
+    }, userId);
+    if (!loggedUserId) return;
 
     // Forward the request to the bird classification model
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
@@ -83,20 +79,23 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
     const { label, probability, classId } = classifierResult;
 
     const bird = await db_birds.findBirdByName(label);
-    
+
     let message = "";
     let updatedScore = user.score;
 
     if (bird) {
       const isInCollection = await db_birds.checkBirdInCollection(userId, bird.bird_id);
 
-      if (!isInCollection) {
+      if (!isInCollection) {        
         // Bird is not in collection - add it
-        // Create an image entry for the collection (img_id is required)
-        const imgId = await db_birds.createImageEntry(
-          req.file.originalname || 'bird_image',
-          '' // img_url can be empty for now
-        );
+
+        const uploadResult = await uploadImageToCloudinary(req.file.buffer);
+
+        const imgId = await db_birds.createImageEntry({
+          img_title: req.file.originalname || "Bird Image",
+          img_url: uploadResult.secure_url,
+          img_public_id: uploadResult.public_id,
+        });
 
         if (imgId) {
           await db_birds.addBirdToCollection(userId, bird.bird_id, imgId);
@@ -124,11 +123,36 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
 
   } catch (err) {
     console.error("Error in analyze-bird endpoint:", err.message);
-    res.status(500).json({ 
+    res.status(500).json({
       error: messages.internalServerError,
-      details: err.message 
+      details: err.message
     });
   }
 });
+
+async function uploadImageToCloudinary(fileBuffer) {
+  return new Promise((resolve, reject) => {
+    const bufferToStream = (buffer) => {
+      const readable = new Readable();
+      readable._read = () => {};
+      readable.push(buffer);
+      readable.push(null);
+      return readable;
+    };
+
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "birds",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    bufferToStream(fileBuffer).pipe(stream);
+  });
+}
 
 module.exports = router;

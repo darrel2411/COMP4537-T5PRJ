@@ -21,6 +21,8 @@ export function UserProvider({ children }) {
             email: data.email,
             name: data.name,
             userTypeId: data.user_type_id,
+            apiConsumption: data.api_consumption,
+            score: data.score,
           });
         } else {
           setUser(null);
