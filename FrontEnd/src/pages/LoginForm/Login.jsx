@@ -39,6 +39,8 @@ function Login() {
           email: data.email,
           name: data.name,
           userTypeId: data.user_type_id,
+          apiConsumption: data.apiConsumption,
+          score: data.score,
         };
         setUser(newUser);
         if (data.user_type_id === 1 || data.userTypeId === 1) {
