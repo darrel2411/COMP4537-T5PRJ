@@ -230,7 +230,7 @@ function Landing() {
                   <Label htmlFor="width">Score</Label>
                   <Input
                     id="width"
-                    defaultValue="100%"
+                    value={user?.score || "aaa"}
                     className="col-span-2 cursor-not-allowed"
                     readOnly
                   />
