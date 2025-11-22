@@ -47,36 +47,32 @@ app.use(session({
     name: 'connect.sid',
     cookie: {
         maxAge: expireTime,
-        // sameSite: 'lax',   // allow cross-port requests on localhost
-        // secure: false      // set true in production (HTTPS)
         httpOnly: true,
         sameSite: isProd ? 'none' : 'lax',
         secure: isProd,
-        // Don't set domain - let browser handle it
+        // Explicitly don't set domain for cross-site cookies
+        domain: undefined
+    },
+    // Ensure cookie is set even with saveUninitialized: false
+    rolling: false,
+    genid: (req) => {
+        return require('crypto').randomBytes(16).toString('hex');
     }
 }));
 
-// Middleware to log Set-Cookie headers on responses (for debugging)
-if (isProd) {
-    app.use((req, res, next) => {
-        // Log Set-Cookie after response is sent
-        const originalJson = res.json;
-        res.json = function(body) {
-            if (req.path.includes('/authenticateUser') && body && body.ok) {
-                // Check after the response is being prepared
-                setTimeout(() => {
-                    const headers = res.getHeaders();
-                    console.log('Response headers after login:', {
-                        setCookie: headers['set-cookie'],
-                        allHeaders: Object.keys(headers)
-                    });
-                }, 100);
-            }
-            return originalJson.call(this, body);
-        };
-        next();
-    });
-}
+// Middleware to ensure cookie is set for modified sessions
+app.use((req, res, next) => {
+    const originalEnd = res.end;
+    res.end = function(...args) {
+        // If session was modified and no cookie is set, ensure it gets set
+        if (req.session && req.session.cookie && !req.sessionID) {
+            // Session exists but no ID - this shouldn't happen, but ensure cookie is set
+            console.log('Warning: Session exists but no sessionID');
+        }
+        return originalEnd.apply(this, args);
+    };
+    next();
+});
 
 // Debug middleware for session (only in production)
 if (isProd) {

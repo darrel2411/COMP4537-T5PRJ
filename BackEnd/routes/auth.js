@@ -79,23 +79,24 @@ router.post('/authenticateUser', async (req, res) => {
         if (results.length == 1) { // There should only be one user
             const isMatch = await bcrypt.compare(password, results[0].password);
             if (isMatch) {
-                req.session.authenticated = true;
-                req.session.email = email;
-                req.session.name = results[0].name;
-                req.session.user_type_id = results[0].user_type_id;
-
-                // Save session and send response
-                req.session.save((err) => {
+                // Regenerate session to ensure new cookie is set
+                req.session.regenerate((err) => {
                     if (err) {
-                        console.error('Session save error:', err);
+                        console.error('Session regenerate error:', err);
                         return res.status(500).json({ 
                             ok: false, 
                             msg: "Failed to create session" 
                         });
                     }
 
+                    // Set session data after regeneration
+                    req.session.authenticated = true;
+                    req.session.email = email;
+                    req.session.name = results[0].name;
+                    req.session.user_type_id = results[0].user_type_id;
+
                     // Debug: Log session creation
-                    console.log('Login successful - Session saved:', {
+                    console.log('Login successful - Session created:', {
                         sessionId: req.session.id,
                         authenticated: req.session.authenticated,
                         email: req.session.email,
@@ -103,6 +104,7 @@ router.post('/authenticateUser', async (req, res) => {
                         origin: req.headers.origin
                     });
 
+                    // Send response - cookie should be set via regenerate
                     res.json({
                         msg: messages.successAuthentication,
                         ok: true,
