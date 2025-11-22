@@ -54,7 +54,7 @@ router.post("/analyze-bird", upload.single("image"), async (req, res) => {
       unauthorized: messages.unauthorized,
       failedToLogRequest: messages.failedToLogRequest
     }, userId);
-    if (!loggedUserId) return; // Error response already sent
+    if (!loggedUserId) return;
 
     // Forward the request to the bird classification model
     const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });

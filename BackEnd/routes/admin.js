@@ -11,7 +11,7 @@ router.get('/get-all-users', async (req, res) => {
             unauthorized: messages.unauthorized,
             failedToLogRequest: "Failed to log request"
         });
-        if (!userId) return; // Error response already sent
+        if (!userId) return;
 
         const users = await db_admin.getAllUsers();
 
@@ -36,7 +36,7 @@ router.get('/get-api-stats', async (req, res) => {
             unauthorized: messages.unauthorized,
             failedToLogRequest: "Failed to log request"
         });
-        if (!userId) return; // Error response already sent
+        if (!userId) return;
 
         const apiStats = await db_admin.getApiStats();
 
@@ -60,7 +60,7 @@ router.get('/get-user-consumption', async (req, res) => {
             unauthorized: messages.unauthorized,
             failedToLogRequest: "Failed to log request"
         });
-        if (!userId) return; // Error response already sent
+        if (!userId) return;
 
         const userConsumption = await db_admin.getUserConsumption();
 

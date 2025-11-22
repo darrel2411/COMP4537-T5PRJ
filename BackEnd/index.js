@@ -32,8 +32,6 @@ const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 
-const isProduction = process.env.NODE_ENV === 'production';
-
 const mongoStore = MongoStore.create({
     mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`,
     crypto: {
@@ -51,8 +49,8 @@ app.use(session({
         // sameSite: 'lax',   // allow cross-port requests on localhost
         // secure: false      // set true in production (HTTPS)
         httpOnly: true,
-        sameSite: isProd === 'production' ? 'none' : 'lax',
-        secure: isProd === 'production',
+        sameSite: isProd ? 'none' : 'lax',
+        secure: isProd,
     }
 }));
 
