@@ -30,6 +30,20 @@ router.get('/get-birds', async (req, res) => {
         birdTypes: birdTypes,
         groupedBirds: groupedBirds,
         collections: collections,
+    });
+});
+
+router.get('/get-bird-info', async (req, res) => {
+    const { birdId } = req.query;
+
+    const bird = await db_birds.getBirdById({ 
+        bird_id: birdId,
+    });
+
+    return res.json({
+        msg: messages.successRetrieveBirds,
+        ok: true,
+        bird: bird,
     })
 });
 

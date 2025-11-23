@@ -12,8 +12,13 @@ const CollectionPage = () => {
     const [groupedBirds, setGroupedBirds] = useState({});
     const [birdTypes, setBirdTypes] = useState([]);
     const [collection, setCollection] = useState({});
-    const [show, setShow] = useState(false)
+    const [show, setShow] = useState(false);
+    const [birdIdDisplayed, setBirdIdDisplayed] = useState('');
+    const [bird, setBird] = useState([]);
+    const [displayBirdImg, setDisplayBirdImg] = useState('');
+    const [warning, setWarning] = useState('');
     const API_BASE = import.meta.env.VITE_API_BASE;
+    
 
     useEffect(() => {
         const retrieveBirds = async () => {
@@ -37,15 +42,42 @@ const CollectionPage = () => {
         retrieveBirds();
     }, []);
 
+    
+    const retrieveInformation = async (birdId) => {
+
+        try {
+            console.log('BirdId to retrieve:', birdId)
+            const response = await fetch(`${API_BASE}/get-bird-info?birdId=${birdId}`);
+            const data = await response.json();
+
+            if (data.ok) {
+                setShow(true);
+                setBird(data.bird);
+                console.log('Bird information to display:', data);
+            }
+
+        } catch (error) {
+            console.log("Error retrieving information")
+        }
+    }
+
+
     if (!birdTypes.length) return <LoadingPage />;
 
     return (
         <div className=" min-h-screen bg-gray-50">
             <Navbar />
+
+            {warning && (
+                <div className="bg-yellow-200 text-yellow-800 text-center py-2 font-semibold">
+                    {warning}
+                </div>
+            )}
+
             {show && (
                 <div>
                     <div className='flex flex-col p-5 space-y-4'>
-                        <BirdDisplay />
+                        <BirdDisplay bird={bird} img={displayBirdImg} />
                     </div>
                     <hr className="m-auto w-[95%]" />
                 </div>
@@ -67,7 +99,22 @@ const CollectionPage = () => {
                             className="flex flex-wrap justify-center gap-4 p-4"
                         >
                             {groupedBirds[type.rare_type_id].map((bird) => (
-                                <BirdCard key={bird.bird_id} bird={bird} imgUrl={collection[bird.bird_id]} />
+                                <BirdCard 
+                                    key={bird.bird_id} 
+                                    bird={bird} 
+                                    imgUrl={collection[bird.bird_id]}
+                                    onClick={async () => {
+                                        if(collection[bird.bird_id]) {
+                                            setWarning('');
+                                            setBirdIdDisplayed(bird.bird_id);
+                                            setDisplayBirdImg(collection[bird.bird_id]);
+                                            await retrieveInformation(bird.bird_id);
+                                        } else {
+                                            setWarning('You do not own this bird yet.');
+                                            setShow(false);
+                                        }
+                                    }}
+                                />
                             ))}
                         </TabsContent>
                     ))}
