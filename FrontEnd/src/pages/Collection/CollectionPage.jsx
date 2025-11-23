@@ -47,7 +47,9 @@ const CollectionPage = () => {
 
         try {
             console.log('BirdId to retrieve:', birdId)
-            const response = await fetch(`${API_BASE}/get-bird-info?birdId=${birdId}`);
+            const response = await fetch(`${API_BASE}/get-bird-info?birdId=${birdId}`, {
+                credentials: "include"
+            });
             const data = await response.json();
 
             if (data.ok) {

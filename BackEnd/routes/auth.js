@@ -321,7 +321,24 @@ router.post('/authenticateUser', async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+    // Log the request before destroying the session
+    const loggedUserId = await logEndpointRequest(
+        req,
+        res,
+        "POST",
+        logMessages
+    );
+    if (!loggedUserId) {
+        // If logging failed, still proceed with logout but return error
+        req.session.destroy(err => {
+            if (err) return res.status(500).json({ ok: false });
+            res.clearCookie('connect.sid');
+            return res.status(500).json({ ok: false });
+        });
+        return;
+    }
+
     req.session.destroy(err => {
         if (err) return res.status(500).json({ ok: false });
         res.clearCookie('connect.sid');
