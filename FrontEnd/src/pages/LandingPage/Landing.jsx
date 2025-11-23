@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { WeatherBadge } from "@/components/Weather/WeatherBadge";
 import { User as ProfileIcon, BarChart3 } from "lucide-react";
 
@@ -35,7 +36,7 @@ import en from "./en";
 function Landing() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
-  const LOGO_URL = "/logo.png";
+  const LOGO_URL = "/eagle-seeklogo.png";
 
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -52,6 +53,7 @@ function Landing() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
+  const [lastWasNewBird, setLastWasNewBird] = useState(null);
 
   const fileInputRef = useRef(null);
   const API_BASE = import.meta.env.VITE_API_BASE;
@@ -84,10 +86,13 @@ function Landing() {
   };
 
   const handleUpload = async () => {
-    if (!file) return setError("Please choose an image first.");
+    if (!file) return setError(en.ERROR.EMPTY_UPLOAD);
     setUploadLoading(true);
     setError("");
     setResult(null);
+
+    // Grab the score *before* we hit the API
+    const previousScore = user?.score ?? 0;
 
     try {
       const fd = new FormData();
@@ -100,10 +105,15 @@ function Landing() {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`Server ${res.status}: ${text || "upload failed"}`);
+        throw new Error(
+          `Server ${res.status}: ${text || en.ERROR.FAILED_UPLOAD}`
+        );
       }
       const data = await res.json().catch(() => ({}));
       setResult(data);
+
+      // Mark whether this is a NEW bird (score changed) or duplicate
+      setLastWasNewBird(data.score !== previousScore);
 
       // update user stats in context
       setUser((prev) => {
@@ -122,7 +132,7 @@ function Landing() {
       // hide Predict / Cancel buttons after a successful upload
       setFile(null);
     } catch (err) {
-      setError(err.message || "Upload failed");
+      setError(err.message || en.ERROR.FAILED_UPLOAD);
     } finally {
       setUploadLoading(false);
     }
@@ -146,13 +156,13 @@ function Landing() {
       }
 
       setUser(null);
-      alert("Account deleted successfully.");
+      alert(en.MESSAGE.DELETE_ACCOUNT_SUCCESS);
 
       setTimeout(() => {
         navigate("/login");
       }, 1000);
     } catch (err) {
-      setError(err.message || "Failed to delete account");
+      setError(err.message || en.ERROR.FAILED_DELETE_ACCOUNT);
       setLoading(false);
     }
   };
@@ -202,7 +212,7 @@ function Landing() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.ok) {
-        throw new Error(data.msg || "Failed to update profile");
+        throw new Error(data.msg || en.ERROR.FAILED_UPDATE_PROFILE);
       }
 
       // update context name if changed
@@ -210,12 +220,12 @@ function Landing() {
         setUser((prev) => (prev ? { ...prev, name: payload.name } : prev));
       }
 
-      setProfileSuccess("Profile updated successfully.");
+      setProfileSuccess(en.MESSAGE.SUCCESS_PROFILE_UPDATE);
       setIsEditing(false);
       setCurrentPassword("");
       setNewPassword("");
     } catch (err) {
-      setProfileError(err.message || "Failed to update profile");
+      setProfileError(err.message || en.ERROR.FAILED_UPDATE_PROFILE);
     } finally {
       setSavingProfile(false);
     }
@@ -240,11 +250,11 @@ function Landing() {
           <PopoverContent className="w-60">
             <div className="grid gap-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none">Stats</h4>
+                <h4 className="font-medium leading-none">{en.LABEL.STATS}</h4>
               </div>
               <div className="grid gap-2">
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor="width">Score</Label>
+                  <Label htmlFor="width">{en.LABEL.SCORE}</Label>
                   <Input
                     id="width"
                     value={user.score}
@@ -253,7 +263,7 @@ function Landing() {
                   />
                 </div>
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor="width">Calls</Label>
+                  <Label htmlFor="width">{en.LABEL.CALLS}</Label>
                   <Input
                     id="width"
                     value={`${user?.apiConsumption ?? 0} / 20`}
@@ -281,10 +291,10 @@ function Landing() {
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
               <SheetHeader>
                 <SheetTitle className="text-center text-3xl font-semibold">
-                  Profile Settings
+                  {en.LABEL.PROFILE_SETTINGS}
                 </SheetTitle>
                 <SheetDescription className="text-center">
-                  Manage your profile information and account settings.
+                  {en.MESSAGE.PROFILE_SETTINGS_DESC}
                 </SheetDescription>
               </SheetHeader>
 
@@ -296,20 +306,20 @@ function Landing() {
                   <FieldGroup className="pt-4 space-y-4">
                     {/* Email – read only */}
                     <Field>
-                      <FieldLabel>Email</FieldLabel>
+                      <FieldLabel>{en.LABEL.EMAIL}</FieldLabel>
                       <Input
                         value={user?.email || ""}
                         readOnly
                         className="bg-gray-100 cursor-not-allowed"
                       />
                       <FieldDescription>
-                        Email cannot be changed
+                        {en.MESSAGE.EMAIL_CANT_BE_CHANGED}
                       </FieldDescription>
                     </Field>
 
                     {/* Name – controlled, disabled when not editing */}
                     <Field>
-                      <FieldLabel>Name</FieldLabel>
+                      <FieldLabel>{en.LABEL.NAME}</FieldLabel>
                       <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -320,7 +330,7 @@ function Landing() {
 
                     {/* Passwords – controlled, disabled when not editing */}
                     <Field>
-                      <FieldLabel>Current Password</FieldLabel>
+                      <FieldLabel>{en.LABEL.CURRENT_PW}</FieldLabel>
                       <Input
                         type="password"
                         value={currentPassword}
@@ -331,7 +341,7 @@ function Landing() {
                     </Field>
 
                     <Field>
-                      <FieldLabel>New Password</FieldLabel>
+                      <FieldLabel>{en.LABEL.NEW_PW}</FieldLabel>
                       <Input
                         type="password"
                         value={newPassword}
@@ -340,8 +350,7 @@ function Landing() {
                         placeholder="************"
                       />
                       <FieldDescription>
-                        Leave password fields empty if you only want to change
-                        your name.
+                        {en.MESSAGE.PASSWORD_DESC}
                       </FieldDescription>
                     </Field>
                   </FieldGroup>
@@ -380,11 +389,10 @@ function Landing() {
                   <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
                     <div>
                       <h3 className="text-sm font-semibold text-destructive">
-                        Danger zone
+                        {en.LABEL.DANGER}
                       </h3>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        This action cannot be undone. Deleting your account will
-                        permanently remove your data from our servers.
+                        {en.MESSAGE.DANGER_ZONE_DESC}
                       </p>
                     </div>
 
@@ -411,10 +419,7 @@ function Landing() {
               <p className="text-sm text-blue-100">
                 {user ? `Hi, ${user.name}!` : "Welcome back!"}
               </p>
-              <p className="mt-1 text-sm text-white">
-                Ready to spot your next bird? Upload a photo and we’ll help you
-                identify it.
-              </p>
+              <p className="mt-1 text-sm text-white">{en.MESSAGE.BANNER}</p>
             </div>
             {/* Weather widget on the right (hidden on very small screens) */}
             <div className="hidden sm:block">
@@ -438,7 +443,7 @@ function Landing() {
             className="px-8 py-3 text-lg font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
             size="lg"
           >
-            Take a photo
+            {en.BUTTON.UPLOAD}
           </Button>
 
           {/* Hidden file input - supports both camera and file upload */}
@@ -470,7 +475,7 @@ function Landing() {
                     setDisplayImage(LOGO_URL);
                   }}
                 >
-                  Cancel
+                  {en.BUTTON.CANCEL}
                 </Button>
               </div>
             </div>
@@ -479,10 +484,52 @@ function Landing() {
           {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
 
           {result && (
-            <div className="mt-4 w-full max-w-md bg-white p-4 rounded-lg shadow-md">
-              <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
-                {JSON.stringify(result, null, 2)}
-              </pre>
+            <div className="mt-6 w-full max-w-md">
+              <Alert
+                className={`shadow-md ${
+                  lastWasNewBird === false
+                    ? "bg-amber-50 border-amber-300"
+                    : "bg-green-50 border-green-300"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    {/* title: show bird label */}
+                    <AlertTitle className="text-base font-semibold capitalize">
+                      {result.label || "Bird identified"}
+                    </AlertTitle>
+
+                    {/* description: message + probability */}
+                    <AlertDescription className="mt-1 text-sm text-gray-700">
+                      {result.message ||
+                        (lastWasNewBird
+                          ? "You found a new bird!"
+                          : "You already found this bird.")}
+
+                      {/* probability */}
+                      {typeof result.probability === "number" && (
+                        <div className="mt-2 text-xs text-gray-600">
+                          {en.LABEL.CONFIDENCE}{" "}
+                          {(result.probability * 100).toFixed(1)}%
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </div>
+
+                  {/* close button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 text-xs"
+                    onClick={() => {
+                      setResult(null);
+                      setLastWasNewBird(null);
+                    }}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </Alert>
             </div>
           )}
         </div>
