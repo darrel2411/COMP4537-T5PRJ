@@ -4,6 +4,37 @@ const db_admin = include("database/admin");
 const { logEndpointRequest } = require("../utils");
 const { messages } = require("../lang/messages/en/user")
 
+/**
+ * @swagger
+ * /get-all-users:
+ *   get:
+ *     summary: Get all users (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 msg:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/get-all-users', async (req, res) => {
     try {
         const userId = await logEndpointRequest(req, res, "GET", {
@@ -29,6 +60,33 @@ router.get('/get-all-users', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /get-api-stats:
+ *   get:
+ *     summary: Get API usage statistics (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: API statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 apiStats:
+ *                   type: array
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/get-api-stats', async (req, res) => {
     try {
         const userId = await logEndpointRequest(req, res, "GET", {
@@ -53,6 +111,33 @@ router.get('/get-api-stats', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /get-user-consumption:
+ *   get:
+ *     summary: Get user API consumption data (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User consumption statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 userConsumption:
+ *                   type: array
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get('/get-user-consumption', async (req, res) => {
     try {
         const userId = await logEndpointRequest(req, res, "GET", {
