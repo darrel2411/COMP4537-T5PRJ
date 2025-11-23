@@ -5,6 +5,8 @@ const express = require("express");
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cors = require("cors");
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -13,8 +15,10 @@ const isProd = process.env.NODE_ENV === "production";
 // Middleware
 app.use(cors({
     origin: [
-        "https://comp-4537-t5-prj.vercel.app", // your Vercel frontend
-        "http://localhost:5173"                // local dev
+        "https://comp-4537-t5-prj.vercel.app", // Vercel frontend
+        "http://localhost:5173",                // local dev frontend
+        `http://localhost:${PORT}`,            // Swagger UI (local)
+        "https://birdquest-backend.onrender.com" // Swagger UI (Render - same origin)
     ],
     credentials: true
 }));
@@ -39,7 +43,7 @@ const mongoStore = MongoStore.create({
     }
 });
 
-// Trust proxy in production (for Render/Cloudflare)
+// Trust proxy in production (for Render)
 if (isProd) {
     app.set('trust proxy', 1);
 }
@@ -63,6 +67,20 @@ app.use(session({
     }
 }));
 
+// Swagger UI documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Bird Classification API Documentation',
+    swaggerOptions: {
+        persistAuthorization: true,
+        withCredentials: true,
+        requestInterceptor: (req) => {
+            // Ensure cookies are sent with requests
+            req.credentials = 'include';
+            return req;
+        }
+    }
+}));
 
 // Importing routes
 const generalRoutes = require('./routes/general.js');
@@ -78,4 +96,5 @@ app.use('/api', birdModelRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Swagger UI available at http://localhost:${PORT}/api-docs`);
 });

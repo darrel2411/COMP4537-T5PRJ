@@ -13,6 +13,38 @@ const logMessages = {
     failedToLogRequest: messages.failedToLogRequest,
 };
 
+/**
+ * @swagger
+ * /check-auth:
+ *   get:
+ *     summary: Check authentication status
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Authentication status and user info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 email:
+ *                   type: string
+ *                   nullable: true
+ *                 name:
+ *                   type: string
+ *                   nullable: true
+ *                 user_type_id:
+ *                   type: integer
+ *                   nullable: true
+ *                 api_consumption:
+ *                   type: integer
+ *                 score:
+ *                   type: integer
+ */
 router.get('/check-auth', async (req, res) => {
     try {
         // If not authenticated, respond early
@@ -51,6 +83,52 @@ router.get('/check-auth', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /createUser:
+ *   post:
+ *     summary: Create a new user account
+ *     tags: [Authentication]
+ *     security: []  # No authentication required
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - name
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               name:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/createUser', async (req, res) => {
     const { email, name, password } = req.body;
 
@@ -93,6 +171,58 @@ router.post('/createUser', async (req, res) => {
     res.status(500).json({ msg: messages.failUserCreation, ok: false });
 });
 
+/**
+ * @swagger
+ * /authenticateUser:
+ *   post:
+ *     summary: Authenticate user and create session
+ *     tags: [Authentication]
+ *     security: []  # No authentication required
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                 ok:
+ *                   type: boolean
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 user_type_id:
+ *                   type: integer
+ *                 api_consumption:
+ *                   type: integer
+ *                 score:
+ *                   type: integer
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/authenticateUser', async (req, res) => {
     const { email, password } = req.body;
 
@@ -165,6 +295,31 @@ router.post('/authenticateUser', async (req, res) => {
     res.json({ msg: messages.userNotFound, ok: false });
 });
 
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Logout user and destroy session
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) return res.status(500).json({ ok: false });
@@ -173,6 +328,41 @@ router.post('/logout', (req, res) => {
     });
 });
 
+/**
+ * @swagger
+ * /delete-user/{email}:
+ *   delete:
+ *     summary: Delete a user account
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Email of the user to delete
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.delete('/delete-user/:email', async (req, res) => {
     const { email } = req.params;
 
@@ -228,6 +418,62 @@ router.delete('/delete-user/:email', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /user/{email}:
+ *   patch:
+ *     summary: Update user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Email of the user to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Not authorized to update this user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.patch('/user/:email', async (req, res) => {
     const { email } = req.params;
     const { name, currentPassword, newPassword } = req.body;

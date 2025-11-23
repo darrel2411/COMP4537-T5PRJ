@@ -21,6 +21,60 @@ const MODEL_API_URL = process.env.MODEL_API_URL;
 // Accepts an uploaded image file and forwards it to the bird classification model
 // Implements API consumption limit, logging, bird matching, and collection logic
 // ───────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /api/analyze-bird:
+ *   post:
+ *     summary: Analyze bird image and classify species
+ *     tags: [Bird Model]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Bird image file to analyze
+ *     responses:
+ *       200:
+ *         description: Bird analysis successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BirdAnalysis'
+ *       400:
+ *         description: No image file provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: API consumption limit reached
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/analyze-bird", upload.single("image"), async (req, res) => {
   try {
     let userId;
