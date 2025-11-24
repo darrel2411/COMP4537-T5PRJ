@@ -74,6 +74,7 @@ router.get('/check-auth', async (req, res) => {
             user_id: user.user_id,
             email: req.session.email,
             name: user.name,
+            img_url: user.img_url,
             user_type_id: user.user_type_id,
             api_consumption: user.api_consumption,
             score: user.score,
@@ -153,6 +154,7 @@ router.post('/createUser', async (req, res) => {
         const created = await db_users.getUser(email.trim());
         const user = Array.isArray(created) ? created[0] : created;
         const userId = user?.user_id ?? null;
+        req.session.userId = userId;
 
         if (userId) {
             const loggedUserId = await logEndpointRequest(
@@ -249,6 +251,7 @@ router.post('/authenticateUser', async (req, res) => {
                     req.session.email = email;
                     req.session.name = results[0].name;
                     req.session.user_type_id = results[0].user_type_id;
+                    req.session.userId = results[0].user_id;
 
                     // Explicitly save session to ensure cookie is set
                     req.session.save(async (saveErr) => {

@@ -20,6 +20,7 @@ export function UserProvider({ children }) {
           setUser({
             email: data.email,
             name: data.name,
+            img_url: data.img_url,
             userId: data.user_id,
             userTypeId: data.user_type_id,
             apiConsumption: data.api_consumption,

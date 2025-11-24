@@ -53,8 +53,10 @@ async function getUser(email) {
 
 async function getUserContext(email) {
     const getUserContextSQL = `
-        SELECT user_id, email, name, user_type_id, api_consumption, score
-        FROM user
+        SELECT user_id, email, name, user_type_id, api_consumption, score, img.img_url
+        FROM user u
+        INNER JOIN image img
+            ON u.img_id = img.img_id
         WHERE email = :email;
     `;
 
@@ -182,6 +184,108 @@ async function getUserCollection(data) {
     }
 }
 
+async function getProfilePictureID(data) {
+    const getProfilePictureIDSQL = `
+        SELECT img.img_id, img.img_public_id
+        FROM user u
+        INNER JOIN image img
+            ON u.img_id = img.img_id
+        WHERE user_id = :user_id;
+    `;
+
+    const params ={
+        user_id: data.user_id,
+    }
+
+
+    try {
+         const result = await database.query(getProfilePictureIDSQL, params);
+        console.log("Successfully retrieve user profile image Id")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error retrieving user profile image Id");
+        console.log(err);
+        return null;
+    }
+}
+
+async function UploadImage(data) {
+    const UploadImageSQL = `
+        INSERT INTO image
+        (img_title, img_url, img_public_id)
+        VALUE
+        (:img_title, :img_url, :img_public_id)
+    `;
+
+    const params ={
+        img_title: 'Profle image',
+        img_url: data.img_url,
+        img_public_id: data.img_public_id,
+    }
+
+
+    try {
+         const result = await database.query(UploadImageSQL, params);
+        console.log("Successfully inserting image")
+        console.log(result[0]);
+        return result[0];
+    } catch (err) {
+        console.log("Error inserting image");
+        console.log(err);
+        return null;
+    }
+}
+
+async function deleteImage(data) {
+    const deleteImageSQL = `
+        DELETE
+        FROM image
+        WHERE img_id = :img_id;
+    `;
+
+    const params ={
+        img_id: data.img_id,
+    }
+
+
+    try {
+         const result = await database.query(deleteImageSQL, params);
+        console.log("Successfully deleted user profile image Id")
+        console.log(result[0]);
+        return true;
+    } catch (err) {
+        console.log("Error deleted user profile image Id");
+        console.log(err);
+        return false;
+    }
+}
+
+async function updateImageId(data) {
+    const updateImageIdSQL = `
+        UPDATE user
+        SET img_id = :img_id
+        WHERE user_id = :user_id;
+    `;
+
+    const params ={
+        user_id: data.user_id,
+        img_id: data.img_id,
+    }
+
+
+    try {
+         const result = await database.query(updateImageIdSQL, params);
+        console.log("Successfully deleted user profile image Id")
+        console.log(result[0]);
+        return true;
+    } catch (err) {
+        console.log("Error deleted user profile image Id");
+        console.log(err);
+        return false;
+    }
+}
+
 
 module.exports = {
     createUser,
@@ -191,4 +295,8 @@ module.exports = {
     updateUser,
     deleteUser,
     getUserCollection,
+    getProfilePictureID,
+    UploadImage,
+    updateImageId,
+    deleteImage,
 }

@@ -30,6 +30,9 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { WeatherBadge } from "@/components/Weather/WeatherBadge";
 import { User as ProfileIcon, BarChart3 } from "lucide-react";
+import PictureUpdate from "@/components/modals/PictureUpdate";
+import ProfilePicture from "@/components/user/ProfilePicture";
+import PictureUpdateForm from "@/components/forms/PictureUpdateForm";
 
 import en from "./en";
 
@@ -54,6 +57,7 @@ function Landing() {
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
   const [lastWasNewBird, setLastWasNewBird] = useState(null);
+  const [openProfilePicture, setOpenProfilePicture] = useState(false)
 
   const fileInputRef = useRef(null);
   const API_BASE = import.meta.env.VITE_API_BASE;
@@ -282,10 +286,14 @@ function Landing() {
             <SheetTrigger asChild>
               <Button
                 variant="outline"
-                className="rounded-full h-16 w-16 border-gray-300 shadow-sm flex items-center justify-center"
+                className="rounded-full h-16 w-16 p-0 m-0 border-gray-300 shadow-sm flex items-center justify-center"
                 aria-label="Open profile settings"
               >
-                <ProfileIcon className="h-8 w-8" />
+                {user.img_url ? <img
+                  src={user.img_url}
+                  alt="profile"
+                  className="w-full h-full object-cover rounded-full"
+                /> : <ProfileIcon className="h-8 w-8" />}
               </Button>
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -302,6 +310,8 @@ function Landing() {
                 {/* Profile fields */}
                 <div className="space-y-4">
                   <FieldSeparator />
+                  <PictureUpdateForm />
+
 
                   <FieldGroup className="pt-4 space-y-4">
                     {/* Email – read only */}
@@ -354,6 +364,9 @@ function Landing() {
                       </FieldDescription>
                     </Field>
                   </FieldGroup>
+                  
+                  {/* Change profile picture Update */}
+                  <PictureUpdate open={openProfilePicture} setOpen={setOpenProfilePicture} />
 
                   {/* error / success messages */}
                   {profileError && (

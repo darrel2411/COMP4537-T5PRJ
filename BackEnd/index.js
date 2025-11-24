@@ -87,13 +87,15 @@ const generalRoutes = require('./routes/general.js');
 const authRoutes = require('./routes/auth.js');
 const birdModelRoutes = require('./routes/birdModel.js');
 const adminRoutes = require('./routes/admin.js');
-const birdsRoute = require('./routes/birds.js');
+const birdsRoutes = require('./routes/birds.js');
+const imagesRoutes = require('./routes/image.js');
 
 app.use('/', generalRoutes);
 app.use('/', authRoutes);
 app.use('/', adminRoutes);
 app.use('/api', birdModelRoutes);
-app.use('/', birdsRoute)
+app.use('/', birdsRoutes);
+app.use('/', imagesRoutes);
 
 
 app.listen(PORT, () => {
