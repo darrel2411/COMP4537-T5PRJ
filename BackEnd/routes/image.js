@@ -6,21 +6,16 @@ const cloudinary = require('../cloudinaryConfig.js');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const { imgMessages } = require('../lang/messages/en/images.js');
+const { logEndpointRequest } = require('../utils');
 
 const router = express.Router();
-
-// ───────────────────────────────────────────────
-// POST /uploadProfileImage
-// Uploads a new profile image for the logged-in user
-// Replaces old image, updates user record, and stores Cloudinary metadata
-// ───────────────────────────────────────────────
 
 /**
  * @swagger
  * /uploadProfileImage:
  *   post:
- *     summary: Upload a new profile image for the logged-in user
- *     tags: [User Images]
+ *     summary: Upload a profile image for the authenticated user
+ *     tags: [Images]
  *     security:
  *       - cookieAuth: []
  *     requestBody:
@@ -35,10 +30,10 @@ const router = express.Router();
  *               image:
  *                 type: string
  *                 format: binary
- *                 description: Profile image file to upload
+ *                 description: Image file to upload as profile picture
  *     responses:
  *       200:
- *         description: Profile image uploaded successfully
+ *         description: Image uploaded successfully
  *         content:
  *           application/json:
  *             schema:
@@ -46,34 +41,63 @@ const router = express.Router();
  *               properties:
  *                 ok:
  *                   type: boolean
+ *                   example: true
  *                 img_url:
  *                   type: string
+ *                   format: uri
+ *                   description: URL of the uploaded image
  *                 msg:
  *                   type: string
+ *                   description: Success message
  *       400:
- *         description: No image file provided
+ *         description: No file provided
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                 ok:
+ *                   type: boolean
+ *                   example: false
  *       500:
- *         description: Server error
+ *         description: Server error or upload failure
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                 ok:
+ *                   type: boolean
+ *                 details:
+ *                   type: object
+ *                   description: Error details (if available)
  */
 router.post('/uploadProfileImage', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ msg: imgMessages.noFileProvided, ok: false });
 
-        const { userId } = req.session;
+        const userId = req.session?.userId || null;
+
+        // Log the endpoint request
+        const loggedUserId = await logEndpointRequest(
+            req,
+            res,
+            "POST",
+            {
+                userNotFound: imgMessages.serverError,
+                unauthorized: imgMessages.serverError,
+                failedToLogRequest: imgMessages.serverError
+            },
+            userId
+        );
+        if (!loggedUserId) return;
+
+        // Use the logged user ID for consistency
+        const finalUserId = loggedUserId;
 
         const bufferToStream = (buffer) => {
             const readable = new Readable();
@@ -94,7 +118,7 @@ router.post('/uploadProfileImage', upload.single('image'), async (req, res) => {
                     return res.status(500).json({ msg: imgMessages.errorUploadingImg, ok: true, details: error });
                 }
 
-                const oldProfilePicture = await db_users.getProfilePictureID({ user_id: userId });
+                const oldProfilePicture = await db_users.getProfilePictureID({ user_id: finalUserId });
                 
                 // Store the image in our database
                 const uploaded = await db_users.UploadImage({
@@ -104,14 +128,14 @@ router.post('/uploadProfileImage', upload.single('image'), async (req, res) => {
 
                 // Connect the image to the user
                 const updateUser = await db_users.updateImageId({
-                    user_id: userId,
+                    user_id: finalUserId,
                     img_id: uploaded.insertId,
                 });
 
                 // Delete Old picture
                 if (oldProfilePicture.length > 0) {
                     console.log("Deleted old image:", oldProfilePicture);
-                    await db_users.deleteImage({ img_id: oldProfilePicture[0].img_id })
+                    await db_users.deleteImage({ img_id: oldProfilePicture[0].img_id });
                     await cloudinary.uploader.destroy(oldProfilePicture[0].img_public_id);
                 }
 
