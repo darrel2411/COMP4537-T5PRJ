@@ -9,6 +9,66 @@ const { imgMessages } = require('../lang/messages/en/images.js');
 
 const router = express.Router();
 
+// ───────────────────────────────────────────────
+// POST /uploadProfileImage
+// Uploads a new profile image for the logged-in user
+// Replaces old image, updates user record, and stores Cloudinary metadata
+// ───────────────────────────────────────────────
+
+/**
+ * @swagger
+ * /uploadProfileImage:
+ *   post:
+ *     summary: Upload a new profile image for the logged-in user
+ *     tags: [User Images]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - image
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile image file to upload
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 img_url:
+ *                   type: string
+ *                 msg:
+ *                   type: string
+ *       400:
+ *         description: No image file provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post('/uploadProfileImage', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ msg: imgMessages.noFileProvided, ok: false });

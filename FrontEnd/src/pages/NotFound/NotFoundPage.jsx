@@ -1,4 +1,5 @@
 import { useState } from "react";
+import en from "./en";
 
 function NotFoundPage() {
   const [msg, setMsg] = useState("");
@@ -17,10 +18,10 @@ function NotFoundPage() {
     <>
       <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
         <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          404 | Not Found
+          {en.label.pageBody}
         </h1>
 
-        <button onClick={fetchQuote}>Get Message</button>
+        <button onClick={fetchQuote}>{en.label.buttons.message}</button>
 
         <h1 className="underline">{msg}</h1>
       </div>

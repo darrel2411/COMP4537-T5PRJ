@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
+import en from "./en";
 
 function Login() {
   const [error, setError] = useState("");
@@ -67,7 +68,7 @@ function Login() {
           className="mx-auto h-28 w-auto"
         />
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight">
-          Sign in to your account
+          {en.labels.signInHeader}
         </h2>
       </div>
 
@@ -82,7 +83,7 @@ function Login() {
           {/* Username sections */}
           <div>
             <label htmlFor="username" className="block text-sm/6 font-medium">
-              Email
+              {en.labels.email}
             </label>
             <div className="mt-2">
               <input
@@ -105,14 +106,14 @@ function Login() {
                 htmlFor="password"
                 className="block text-sm/6 font-medium "
               >
-                Password
+                {en.labels.password}
               </label>
               <div className="text-sm">
                 <a
                   href="#"
                   className="font-semibold text-indigo-400 hover:text-indigo-300"
                 >
-                  Forgot password?
+                  {en.labels.forgotPassword}
                 </a>
               </div>
             </div>
@@ -136,19 +137,19 @@ function Login() {
               type="submit"
               className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 font-semibold text-white hover:bg-indigo-400"
             >
-              Sign in
+              {en.labels.buttons.signIn}
             </button>
           </div>
         </form>
 
         <p className="mt-10 text-center text-sm/6 text-gray-400">
-          Not a member?
+          {en.labels.AlternativeOption}
           <a
             href="/register"
             className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
             {" "}
-            Sign up
+            {en.labels.alternativeAction}
           </a>
         </p>
       </div>

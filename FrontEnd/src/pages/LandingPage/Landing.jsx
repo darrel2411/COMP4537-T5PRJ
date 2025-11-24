@@ -30,8 +30,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { WeatherBadge } from "@/components/Weather/WeatherBadge";
 import { User as ProfileIcon, BarChart3 } from "lucide-react";
-import PictureUpdate from "@/components/modals/PictureUpdate";
-import ProfilePicture from "@/components/user/ProfilePicture";
 import PictureUpdateForm from "@/components/forms/PictureUpdateForm";
 
 import en from "./en";
@@ -364,9 +362,6 @@ function Landing() {
                       </FieldDescription>
                     </Field>
                   </FieldGroup>
-                  
-                  {/* Change profile picture Update */}
-                  <PictureUpdate open={openProfilePicture} setOpen={setOpenProfilePicture} />
 
                   {/* error / success messages */}
                   {profileError && (

@@ -3,6 +3,7 @@ import ProfilePicture from "@/components/user/ProfilePicture";
 import { useUser } from "@/context/UserContext";
 import { useState, useEffect } from "react";
 import { Spinner } from "../ui/spinner";
+import en from "./en";
 
 const PictureUpdateForm = () => {
     const { user, setUser } = useUser();
@@ -79,7 +80,7 @@ const PictureUpdateForm = () => {
                     className={`bg-gray-800 text-white px-4 py-2  rounded-md hover:bg-gray-700 w-40 text-center
                             ${loading ? "opacity-50 pointer-events-none" : ""}`}
                 >
-                    Update Image
+                    {en.labels.buttons.updateImage}
                 </label>
                 <input
                     id="profileImage"
@@ -91,7 +92,7 @@ const PictureUpdateForm = () => {
                 {
                     selectedImage && (
                         <Button className="bg-green-600 hover:bg-green-700 h-10" onClick={handleSubmit}>
-                            {loading ? <Spinner/> : <span>Save</span>}
+                            {loading ? <Spinner/> : <span>{en.labels.buttons.save}</span>}
                         </Button>
                     )
                 }

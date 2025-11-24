@@ -5,6 +5,7 @@ import BirdCard from '@/components/Collection/BirdCard';
 import { useState, useEffect } from 'react';
 import LoadingPage from '@/components/utils/LoadingPage';
 import { useUser } from "@/context/UserContext";
+import en from "./en";
 
 
 const CollectionPage = () => {
@@ -112,7 +113,7 @@ const CollectionPage = () => {
                                             setDisplayBirdImg(collection[bird.bird_id]);
                                             await retrieveInformation(bird.bird_id);
                                         } else {
-                                            setWarning('You do not own this bird yet.');
+                                            setWarning(en.error.notInCollection);
                                             setShow(false);
                                         }
                                         window.scrollTo({ top: 0, behavior: 'smooth' });

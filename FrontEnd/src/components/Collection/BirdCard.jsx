@@ -1,7 +1,7 @@
 import { Trophy } from 'lucide-react';
+import en from './en';
 
 const BirdCard = ({ bird, imgUrl, onClick }) => {
-    const owned = Boolean(imgUrl);
     const found = imgUrl ? "ring-4 ring-green-400 shadow-[0_0_20px_rgba(34,197,94,0.7)]" : "";
 
 
@@ -12,7 +12,7 @@ const BirdCard = ({ bird, imgUrl, onClick }) => {
             
             {imgUrl && (
                 <div className="absolute top-3 left-0 bg-green-600 text-white px-2 py-1 text-xs font-bold rotate-[-20deg] origin-left z-20 ">
-                    Collected
+                    {en.labels.collected}
                 </div>
             )}
 

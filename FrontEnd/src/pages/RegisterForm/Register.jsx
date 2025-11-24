@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2Icon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import en from "./en";
 
 function Register() {
   const [error, setError] = useState("");
@@ -40,12 +41,11 @@ function Register() {
         console.log(data);
         setSuccess("User created successfully");
         navigate("/login");
-        // window.location.href = "/";
       } else {
         setError(data.msg);
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(en.error.network);
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,7 @@ function Register() {
           className="mx-auto h-28 w-auto"
         />
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight">
-          Sign up to create account
+          {en.labels.signUpHeader}
         </h2>
       </div>
       {/* ✅ success alert */}
@@ -68,7 +68,7 @@ function Register() {
         <div className="mt-4 sm:mx-auto sm:w-full sm:max-w-sm">
           <Alert>
             <CheckCircle2Icon className="h-4 w-4 text-green-500" />
-            <AlertTitle>Success</AlertTitle>
+            <AlertTitle>{en.success.success}</AlertTitle>
             <AlertDescription>{success}</AlertDescription>
           </Alert>
         </div>
@@ -84,7 +84,7 @@ function Register() {
           {/* Username sections */}
           <div>
             <label htmlFor="email" className="block text-sm/6 font-medium">
-              Email
+              {en.labels.email}
             </label>
             <div className="mt-2">
               <input
@@ -104,7 +104,7 @@ function Register() {
           {/* name sections */}
           <div>
             <label htmlFor="name" className="block text-sm/6 font-medium">
-              Name
+              {en.labels.name}
             </label>
             <div className="mt-2">
               <input
@@ -127,7 +127,7 @@ function Register() {
                 htmlFor="password"
                 className="block text-sm/6 font-medium "
               >
-                Password
+                {en.labels.password}
               </label>
             </div>
             <div className="mt-2">
@@ -151,19 +151,19 @@ function Register() {
               type="submit"
               className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 font-semibold text-white hover:bg-indigo-400"
             >
-              Sign up
+              {en.labels.buttons.signUp}
             </button>
           </div>
         </form>
 
         <p className="mt-10 text-center text-sm/6 text-gray-400">
-          already a member?
+          {en.labels.AlternativeOption}
           <a
             href="/login"
             className="font-semibold text-indigo-400 hover:text-indigo-300"
           >
             {" "}
-            Sign in
+            {en.labels.alternativeAction}
           </a>
         </p>
       </div>
