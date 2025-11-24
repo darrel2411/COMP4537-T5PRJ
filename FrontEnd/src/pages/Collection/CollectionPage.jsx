@@ -79,7 +79,7 @@ const CollectionPage = () => {
             {show && (
                 <div>
                     <div className='flex flex-col p-5 space-y-4'>
-                        <BirdDisplay bird={bird} img={displayBirdImg} />
+                        <BirdDisplay bird={bird} img={displayBirdImg} handleClose={() => setShow(false)}/>
                     </div>
                     <hr className="m-auto w-[95%]" />
                 </div>
@@ -115,6 +115,7 @@ const CollectionPage = () => {
                                             setWarning('You do not own this bird yet.');
                                             setShow(false);
                                         }
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
                                     }}
                                 />
                             ))}
