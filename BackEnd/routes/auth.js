@@ -7,6 +7,56 @@ const db_users = include('database/users');
 const { messages } = require('../lang/messages/en/user');
 const { logEndpointRequest } = require('../utils');
 
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+// const { ok } = require("assert");
+const db_passwordReset = include('database/password_reset');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// Global transporter (will be filled after test account is created)
+let transporter = null;
+
+// Create a test account for Ethereal
+nodemailer.createTestAccount().then(testAccount => {
+    transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+            user: testAccount.user,
+            pass: testAccount.pass
+        }
+    });
+
+    console.log("Ethereal email ready!");
+    console.log("Test account:", testAccount.user);
+}).catch(err => {
+    console.error("Failed to create Ethereal test account", err);
+});
+
+async function sendResetEmail(to, link) {
+    if (!transporter) {
+        console.error("Email transporter not ready yet");
+        return;
+    }
+
+    const info = await transporter.sendMail({
+        from: '"BirdQuest" <no-reply@birdquest.com>',
+        to,
+        subject: "Reset your BirdQuest password",
+        html: `
+            <p>You requested a password reset.</p>
+            <p>Click this link to reset your password:</p>
+            <p><a href="${link}">${link}</a></p>
+            <p>This link expires in 1 hour.</p>
+        `,
+    });
+
+    console.log("Reset email sent!");
+    console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
+}
+
 const logMessages = {
     userNotFound: messages.userNotFound,
     unauthorized: messages.unauthorized,
@@ -583,5 +633,123 @@ router.patch('/user/:email', async (req, res) => {
         });
     }
 });
+
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            ok: false,
+            msg: "Email is required"
+        });
+    }
+
+    try {
+        const result = await db_users.getUser(email.trim());
+
+        // If user not found, still return ok (do not reveal)
+        if (!result || result.length === 0) {
+            return res.json({
+                ok: true,
+                msg: "If this email exists, a reset link has been sent"
+            });
+        }
+
+        const user = Array.isArray(result) ? result[0] : result;
+
+        // create token
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // expires in 1 hour
+
+        const created = await db_passwordReset.createResetToken(user.user_id, token, expiresAt)
+
+        if (!created) {
+            return res.status(500).json({
+                ok: false,
+                msg: "Could not create reset token"
+            })
+        }
+
+        const resetLink = `${FRONTEND_URL}/reset-password?token=${token}`;
+
+        // try send email
+        try {
+            await sendResetEmail(email.trim(), resetLink);
+            console.log(`Sent password reset email to ${email}`);
+        } catch (err) {
+            console.error(`Error sending reset email to ${email}`);
+        }
+
+        return res.json({
+            ok: true,
+            msg: "If this email exists, a reset link has been sent"
+        })
+
+
+    } catch (error) {
+        console.error("Error in /forgot-password", err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Server error while requesting password reset"
+        });
+    }
+
+
+})
+
+router.post('/reset-password', async (req, res) => {
+    const { token, password } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            ok: false,
+            msg: "Token and new password is required"
+        });
+    }
+
+    try {
+
+        // find and check if token exists
+        const record = await db_passwordReset.findValidToken(token);
+
+        if (!record) {
+            return res.status(400).json({
+                ok: false,
+                msg: "Reset link expired"
+            })
+        }
+
+        const email = record.email;
+
+        // hash new password
+        const hashPassword = bcrypt.hashSync(password, saltRounds);
+
+        const updateResult = await db_users.updateUser(email, {
+            password: hashPassword
+        })
+
+        if (!updateResult || updateResult.affectedRows === 0) {
+            return res.status(500).json({
+                ok: false,
+                msg: "Could not update password"
+            })
+        }
+
+        // Mark token as used
+        await db_passwordReset.markTokenUsed(token);
+
+        return res.json({
+            ok: true,
+            msg: "Password has been updated"
+        })
+
+    } catch (error) {
+        console.error("Error in /reset-password", err);
+        return res.status(500).json({
+            ok: false,
+            msg: "Server error while resetting password"
+        });
+    }
+})
 
 module.exports = router;
