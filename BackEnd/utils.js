@@ -1,10 +1,10 @@
 // Define the inclide function for absilute file name
 global.base_dir = __dirname;
-global.abs_path = function(path){
+global.abs_path = function (path) {
     return base_dir + path;
 }
-global.include = function(file) {
-    return require( abs_path('/' + file) );
+global.include = function (file) {
+    return require(abs_path('/' + file));
 }
 
 /**
@@ -13,15 +13,15 @@ global.include = function(file) {
 async function logEndpointRequest(req, res, method, errorMessages = {}, userId = null) {
     const db_users = include('database/users');
     const db_logging = include('database/logging');
-    
+
     const defaultMessages = {
         userNotFound: "User not found",
         unauthorized: "Unauthorized",
         failedToLogRequest: "Failed to log request"
     };
-    
-    const messages = { ...defaultMessages, ...errorMessages };
-    
+
+    const messages = { ...defaultMessages, ...errorMessages }; // Take all the key–value pairs from this object and copy them into a new object.
+
     // Get userId from request if not provided
     if (userId === null) {
         if (req.user && req.user.id) {
@@ -38,7 +38,7 @@ async function logEndpointRequest(req, res, method, errorMessages = {}, userId =
             return null;
         }
     }
-    
+
     // Log the request
     const methodId = await db_logging.getOrCreateMethod(method);
     if (!methodId) {
@@ -46,16 +46,16 @@ async function logEndpointRequest(req, res, method, errorMessages = {}, userId =
         res.status(500).json({ error: messages.failedToLogRequest });
         return null;
     }
-    
+
     const endpointId = await db_logging.getOrCreateEndpoint(methodId, req.baseUrl + req.path);
     if (!endpointId) {
         console.error("Failed to get or create endpoint");
         res.status(500).json({ error: messages.failedToLogRequest });
         return null;
     }
-    
+
     await db_logging.logRequest(endpointId, userId);
-    
+
     return userId;
 }
 

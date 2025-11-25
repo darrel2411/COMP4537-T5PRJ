@@ -20,7 +20,7 @@ app.use(cors({
         `http://localhost:${PORT}`,            // Swagger UI (local)
         "https://birdquest-backend.onrender.com" // Swagger UI (Render - same origin)
     ],
-    credentials: true
+    credentials: true // This backend allows cookies / authorization headers / credentials to be sent.
 }));
 app.use(express.json()); // Parse incoming JSON requests
 
@@ -56,14 +56,16 @@ app.use(session({
     name: 'connect.sid',
     cookie: {
         maxAge: expireTime,
-        httpOnly: true,
+        httpOnly: true, // to prevent JS in the browser to access 'document.cookie'. only for http not JS
         sameSite: isProd ? 'none' : 'lax',
         secure: isProd
         // Don't set domain - let browser handle cross-site cookies
+        // if sameSite = 'none' , then (allow frontend + backend on different domains)
+        // if sameSite = 'lax', then (ok for localhost)
     },
     rolling: false,
-    genid: (req) => {
-        return require('crypto').randomBytes(16).toString('hex');
+    genid: (req) => { // optional function that lets you customize session ID
+        return require('crypto').randomBytes(16).toString('hex'); // generate 16 bytes of cryptographically secure random data and convert it to hex
     }
 }));
 
