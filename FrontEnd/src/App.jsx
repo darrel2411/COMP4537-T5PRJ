@@ -13,6 +13,8 @@ import Register from "./pages/RegisterForm/Register";
 import { UserProvider, useUser } from "./context/UserContext";
 import Admin from "./pages/AdminPage/Admin";
 import CollectionPage from "./pages/Collection/CollectionPage";
+import ForgotPassword from "./pages/ForgotPasswordPage/ForgotPassword";
+import ResetPassword from "./pages/ResetPasswordPage/ResetPassword";
 
 function App() {
   return (
@@ -35,11 +37,15 @@ function AppRoutes() {
       <Route
         path="/"
         element={
-          user
-            ? user.userTypeId === 1
-              ? <Navigate to="/admin" replace />
-              : <Navigate to="/main" replace />
-            : <Navigate to="/login" replace />
+          user ? (
+            user.userTypeId === 1 ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Navigate to="/main" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
 
@@ -48,11 +54,15 @@ function AppRoutes() {
         path="/login"
         // element={user ? <Navigate to="/main" replace /> : <Login />}
         element={
-          user
-            ? user.userTypeId === 1
-              ? <Navigate to="/admin" replace />
-              : <Navigate to="/main" replace />
-            : <Login />
+          user ? (
+            user.userTypeId === 1 ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Navigate to="/main" replace />
+            )
+          ) : (
+            <Login />
+          )
         }
       />
       <Route
@@ -73,6 +83,9 @@ function AppRoutes() {
           )
         }
       />
+
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected routes (Valid session needed) */}
       <Route
